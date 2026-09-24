@@ -19,6 +19,7 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
   for (const p of world.players) {
     if (!p.alive) continue;
     tickCooldowns(p, dt);
+    if (p.shieldTime > 0) p.shieldTime = Math.max(0, p.shieldTime - dt);
 
     const input = inputs.get(p.id);
     if (input) {
@@ -50,13 +51,16 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
     p.knockback.y *= CONFIG.player.knockbackDecay;
   }
 
-  // 2. Collisions entre joueurs.
+  // 2. Grappins actifs : laisse la cible attachée puis l'éjecte à la fin.
+  updateGrapples(world, dt);
+
+  // 3. Collisions entre joueurs.
   resolvePlayerCollisions(world.players);
 
-  // 3. Projectiles : chaque projectile est mis à jour par SON comportement.
+  // 4. Projectiles : chaque projectile est mis à jour par SON comportement.
   updateProjectiles(world, dt);
 
-  // 4. Rétrécissement de l'arène (sauf en mode démo).
+  // 5. Rétrécissement de l'arène (sauf en mode démo).
   if (world.arenaShrinks && world.time > CONFIG.arena.shrinkDelay) {
     world.arenaRadius = Math.max(
       CONFIG.arena.minRadius,
@@ -64,11 +68,45 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
     );
   }
 
-  // 5. Dégâts hors de l'arène + mort.
+  // 6. Dégâts hors de l'arène + mort.
   for (const p of world.players) {
     if (!p.alive) continue;
     const outside = dist(p.pos, world.arenaCenter) + p.radius > world.arenaRadius;
     if (outside) applyDamage(p, CONFIG.player.outOfBoundsDps * dt);
+  }
+}
+
+/**
+ * Grappin : tant qu'il est actif, la cible reste à portée de laisse (traînée avec
+ * le grappleur). À la fin, la cible est éjectée dans la direction visée du grappleur.
+ */
+function updateGrapples(world: WorldState, dt: number): void {
+  for (const p of world.players) {
+    const g = p.grapple;
+    if (!g) continue;
+    const target = world.players.find((x) => x.id === g.targetId);
+    if (!p.alive || !target || !target.alive) {
+      p.grapple = null;
+      continue;
+    }
+
+    g.time -= dt;
+
+    // Laisse : si la cible dépasse la longueur, on la ramène à portée.
+    const dx = target.pos.x - p.pos.x;
+    const dy = target.pos.y - p.pos.y;
+    const d = Math.hypot(dx, dy) || 1;
+    if (d > g.tether) {
+      target.pos.x = p.pos.x + (dx / d) * g.tether;
+      target.pos.y = p.pos.y + (dy / d) * g.tether;
+    }
+
+    // Fin du grappin : on projette la cible dans la direction visée du grappleur.
+    if (g.time <= 0) {
+      target.knockback.x += p.facing.x * g.launch;
+      target.knockback.y += p.facing.y * g.launch;
+      p.grapple = null;
+    }
   }
 }
 

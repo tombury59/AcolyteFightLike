@@ -5,6 +5,7 @@ import type { Player } from './types';
  * le moteur, lui, n'a aucune connaissance des sorts.
  */
 export function applyDamage(target: Player, amount: number): void {
+  if (target.shieldTime > 0) return; // le bouclier bloque les dégâts
   target.health -= amount;
   if (target.health <= 0) {
     target.health = 0;

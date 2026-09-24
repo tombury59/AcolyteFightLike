@@ -73,9 +73,33 @@ export class Renderer {
 
     this.drawArena(world);
     for (const proj of world.projectiles) this.drawProjectile(proj);
+    this.drawGrapples(world);
     for (const p of world.players) this.drawPlayer(p, opts.minimal ?? false);
     this.drawParticles(particles);
     if (!opts.minimal) this.drawHud(world);
+  }
+
+  /** Câble du grappin entre le lanceur et sa cible. */
+  private drawGrapples(world: WorldState): void {
+    const { ctx, camera } = this;
+    for (const p of world.players) {
+      if (!p.grapple) continue;
+      const target = world.players.find((x) => x.id === p.grapple!.targetId);
+      if (!target) continue;
+      const a = camera.worldToScreen(p.pos);
+      const b = camera.worldToScreen(target.pos);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#f472b6';
+      ctx.stroke();
+      // Petit crochet à la cible.
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#f472b6';
+      ctx.fill();
+    }
   }
 
   /** Champ d'étoiles en fond, décalé faiblement (couche lointaine du parallax). */
@@ -128,6 +152,10 @@ export class Renderer {
   }
 
   private drawProjectile(proj: Projectile): void {
+    if (proj.renderKind === 'beam') return this.drawBeam(proj);
+    if (proj.renderKind === 'arc') return this.drawArcSwipe(proj);
+    if (proj.renderKind === 'bolt') return this.drawBolt(proj);
+
     const { ctx, camera } = this;
     const s = camera.worldToScreen(proj.pos);
     const r = proj.radius * camera.zoom;
@@ -148,6 +176,75 @@ export class Renderer {
     ctx.stroke();
   }
 
+  /** Rayon laser : une ligne fine depuis l'origine dans sa direction. */
+  private drawBeam(proj: Projectile): void {
+    const { ctx, camera } = this;
+    const o = camera.worldToScreen(proj.pos);
+    const dx = proj.params.dx ?? 1;
+    const dy = proj.params.dy ?? 0;
+    const len = (proj.params.length ?? 4000) * camera.zoom;
+    const ex = o.x + dx * len;
+    const ey = o.y + dy * len;
+    const w = (proj.params.width ?? 5) * camera.zoom;
+
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.35;
+    ctx.strokeStyle = proj.color;
+    ctx.lineWidth = w * 3;
+    ctx.beginPath();
+    ctx.moveTo(o.x, o.y);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = Math.max(2, w);
+    ctx.beginPath();
+    ctx.moveTo(o.x, o.y);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+    ctx.strokeStyle = proj.color;
+    ctx.lineWidth = Math.max(1, w * 0.5);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+  }
+
+  /** Balayage en demi-cercle devant le lanceur. */
+  private drawArcSwipe(proj: Projectile): void {
+    const { ctx, camera } = this;
+    const c = camera.worldToScreen(proj.pos);
+    const r = (proj.params.radius ?? 90) * camera.zoom;
+    const ang = Math.atan2(proj.params.dy ?? 0, proj.params.dx ?? 1);
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.moveTo(c.x, c.y);
+    ctx.arc(c.x, c.y, r, ang - Math.PI / 2, ang + Math.PI / 2);
+    ctx.closePath();
+    ctx.fillStyle = proj.color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = proj.color;
+    ctx.stroke();
+  }
+
+  /** Trait laser : un court segment lumineux dans le sens du déplacement. */
+  private drawBolt(proj: Projectile): void {
+    const { ctx, camera } = this;
+    const s = camera.worldToScreen(proj.pos);
+    const speed = Math.hypot(proj.vel.x, proj.vel.y) || 1;
+    const dx = proj.vel.x / speed;
+    const dy = proj.vel.y / speed;
+    const half = 14 * camera.zoom;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = proj.color;
+    ctx.lineWidth = Math.max(3, proj.radius * camera.zoom * 1.4);
+    ctx.beginPath();
+    ctx.moveTo(s.x - dx * half, s.y - dy * half);
+    ctx.lineTo(s.x + dx * half, s.y + dy * half);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+  }
+
   private drawPlayer(p: Player, minimal: boolean): void {
     const { ctx, camera } = this;
     if (!p.alive) return;
@@ -159,6 +256,20 @@ export class Renderer {
     ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
     ctx.fill();
+
+    // Bouclier actif : anneau cyan lumineux autour du joueur.
+    if (p.shieldTime > 0) {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, r + 6, 0, Math.PI * 2);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#22d3ee';
+      ctx.globalAlpha = 0.85;
+      ctx.stroke();
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = '#22d3ee';
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
 
     // Indicateur de visée.
     ctx.beginPath();

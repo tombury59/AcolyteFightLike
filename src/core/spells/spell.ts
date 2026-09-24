@@ -15,6 +15,8 @@ export interface Spell {
   description: string;
   /** Clé du visuel animé du grimoire (ex. 'orb', 'blink'). */
   preview: string;
+  /** Icône SVG dédiée (contenu interne d'un <svg viewBox="0 0 24 24">, fill blanc). */
+  icon: string;
   /** Applique l'effet du sort (spawn de projectile, dash, etc.). */
   cast(world: WorldState, caster: Player): void;
 }

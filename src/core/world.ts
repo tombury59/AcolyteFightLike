@@ -23,6 +23,8 @@ export function createPlayer(
     alive: true,
     facing: vec(1, 0),
     knockback: vec(0, 0),
+    shieldTime: 0,
+    grapple: null,
     color,
     isBot,
     spellSlots: [...spellSlots],

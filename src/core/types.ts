@@ -28,6 +28,10 @@ export interface Player {
   facing: Vec2;
   /** Vitesse de recul en cours (s'ajoute au déplacement, s'amortit avec le temps). */
   knockback: Vec2;
+  /** Temps de bouclier restant en secondes (bloque les dégâts si > 0). */
+  shieldTime: number;
+  /** Grappin actif : cible liée, temps restant, longueur de laisse et force d'éjection. */
+  grapple: { targetId: string; time: number; tether: number; launch: number } | null;
   color: string;
   isBot: boolean;
   /** Emplacements de sorts (longueur fixe, `null` = vide). L'index = la touche. */
@@ -49,7 +53,9 @@ export interface Projectile {
   dead: boolean;
   /** Clé du comportement dans le registre des sorts (le moteur l'appelle sans le connaître). */
   behavior: string;
-  /** Paramètres propres au sort, lus UNIQUEMENT par son comportement. */
+  /** Forme de rendu : 'circle' (défaut), 'beam', 'arc'. */
+  renderKind: string;
+  /** Paramètres propres au sort, lus UNIQUEMENT par son comportement / le rendu. */
   params: Record<string, number>;
 }
 

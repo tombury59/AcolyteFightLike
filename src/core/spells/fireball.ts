@@ -27,6 +27,7 @@ export const fireball: Spell = {
     'Un orbe géant et lent qui traverse tout et pousse les ennemis devant lui. ' +
     'Peu de dégâts, mais idéal pour éjecter un rival hors de l’arène.',
   preview: 'orb',
+  icon: '<path d="M12 2c1.2 3.6 4.8 4.8 4.8 8.6a4.8 4.8 0 1 1-9.6 0c0-1.7.9-2.9 1.9-3.9.1 1.8 1 2.8 2 2.8.2-2.8-.9-4-1.1-7.5z"/>',
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({
@@ -42,6 +43,7 @@ export const fireball: Spell = {
       life: LIFETIME,
       dead: false,
       behavior: 'fireballOrb',
+      renderKind: 'circle',
       params: { dps: DPS, knockback: KNOCKBACK },
     });
   },

@@ -5,14 +5,9 @@ import type { Spell } from '../core/spells/spell';
 
 const DND_MIME = 'application/x-afl-spell';
 
-/** Glyphe SVG (blanc) affiché dans l'emblème d'un sort, selon son visuel. */
-function spellGlyph(preview: string): string {
-  if (preview === 'blink') {
-    // Éclair (dash).
-    return '<svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>';
-  }
-  // Flamme (orbe / boule de feu) par défaut.
-  return '<svg viewBox="0 0 24 24"><path d="M12 2c1.2 3.6 4.8 4.8 4.8 8.6a4.8 4.8 0 1 1-9.6 0c0-1.7.9-2.9 1.9-3.9.1 1.8 1 2.8 2 2.8.2-2.8-.9-4-1.1-7.5z"/></svg>';
+/** Emblème SVG d'un sort à partir de son icône dédiée. */
+function spellIconSvg(icon: string): string {
+  return `<svg viewBox="0 0 24 24">${icon}</svg>`;
 }
 
 /**
@@ -266,7 +261,7 @@ export class Spellbook {
       top.className = 'spell-card-top';
       const emblem = document.createElement('span');
       emblem.className = 'spell-emblem';
-      emblem.innerHTML = spellGlyph(spell.preview);
+      emblem.innerHTML = spellIconSvg(spell.icon);
       const titles = document.createElement('div');
       titles.className = 'spell-card-titles';
       const name = document.createElement('div');
