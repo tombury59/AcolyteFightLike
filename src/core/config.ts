@@ -3,6 +3,9 @@ export const CONFIG = {
   /** Pas de simulation fixe (60 Hz). */
   fixedDt: 1 / 60,
 
+  /** Durée d'une manche en secondes (survie = victoire). */
+  matchDuration: 60,
+
   arena: {
     startRadius: 500,
     /** Rayon en dessous duquel l'arène ne rétrécit plus. */
