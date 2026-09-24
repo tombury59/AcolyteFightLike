@@ -174,7 +174,7 @@ export class Spellbook {
     palLabel.className = 'book-subtitle';
     palLabel.textContent = 'Sorts disponibles';
     this.equipPalette = document.createElement('div');
-    this.equipPalette.className = 'palette';
+    this.equipPalette.className = 'spell-cards';
 
     el.append(h, this.equipSlots, palLabel, this.equipPalette);
     this.renderSlots();
@@ -224,24 +224,65 @@ export class Spellbook {
     }
   }
 
-  /** Palette : un sort déjà équipé est grisé et non déplaçable (pas de doublon). */
+  /** Cartes des sorts disponibles : nom + début de description + boutons + / 📖. */
   private renderPalette(): void {
     const container = this.equipPalette;
     if (!container) return;
     container.innerHTML = '';
-    for (const spell of this.spells) {
+
+    this.spells.forEach((spell, idx) => {
       const equipped = this.loadout.includes(spell.id);
-      const chip = this.makeChip(spell.id, true);
-      if (equipped) {
-        chip.classList.add('chip-disabled');
-        chip.draggable = false;
-        chip.title = 'Déjà équipé';
-      } else {
-        chip.addEventListener('click', () => this.addToFirstEmpty(spell.id));
+      const full = this.loadout.indexOf(null) < 0;
+
+      const card = document.createElement('div');
+      card.className = 'spell-card' + (equipped ? ' equipped' : '');
+      card.style.setProperty('--chip-color', spell.color);
+      card.draggable = !equipped;
+      if (spell.id === this.highlightSpell) card.classList.add('chip-highlight');
+
+      if (!equipped) {
+        card.addEventListener('dragstart', (e) => {
+          card.classList.add('dragging');
+          const payload = JSON.stringify({ spellId: spell.id, fromSlot: null });
+          e.dataTransfer?.setData(DND_MIME, payload);
+          e.dataTransfer?.setData('text/plain', payload);
+          if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', () => card.classList.remove('dragging'));
       }
-      if (spell.id === this.highlightSpell) chip.classList.add('chip-highlight');
-      container.appendChild(chip);
-    }
+
+      const head = document.createElement('div');
+      head.className = 'spell-card-head';
+      const dot = document.createElement('span');
+      dot.className = 'chip-dot';
+      const name = document.createElement('span');
+      name.className = 'spell-card-name';
+      name.textContent = spell.name;
+      head.append(dot, name);
+
+      // Début de la description (source unique, tronquée par CSS).
+      const desc = document.createElement('p');
+      desc.className = 'spell-card-desc';
+      desc.textContent = spell.description;
+
+      const actions = document.createElement('div');
+      actions.className = 'spell-card-actions';
+      const add = document.createElement('button');
+      add.className = 'spell-card-btn add';
+      add.textContent = equipped ? '✓' : '+';
+      add.title = equipped ? 'Déjà équipé' : full ? 'Emplacements pleins' : 'Équiper';
+      add.disabled = equipped || full;
+      add.addEventListener('click', () => this.addToFirstEmpty(spell.id));
+      const book = document.createElement('button');
+      book.className = 'spell-card-btn book';
+      book.textContent = '📖';
+      book.title = 'Voir la fiche';
+      book.addEventListener('click', () => this.go(idx + 1));
+      actions.append(add, book);
+
+      card.append(head, desc, actions);
+      container.appendChild(card);
+    });
   }
 
   private makeChip(spellId: string, small: boolean, fromSlot?: number): HTMLElement {
