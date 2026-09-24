@@ -21,7 +21,8 @@ export class Spellbook {
   private loadout: (string | null)[] = [];
   private raf = 0;
 
-  constructor() {
+  /** `onChange` est appelé après chaque modification du loadout (pour rafraîchir l'accueil). */
+  constructor(private onChange?: () => void) {
     this.pages = [
       { kind: 'equip' },
       ...Object.values(SPELLS).map((spell) => ({ kind: 'spell' as const, spell })),
@@ -248,6 +249,7 @@ export class Spellbook {
   private persist(container: HTMLElement): void {
     store.setLoadout(this.loadout);
     this.renderSlots(container);
+    this.onChange?.();
   }
 
   // --- Page fiche de sort ---

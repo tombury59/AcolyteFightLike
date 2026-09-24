@@ -134,10 +134,11 @@ body,
   gap: 22px;
   padding: 24px;
   text-align: center;
-  /* Transparent (la démo de bots du canvas se voit derrière) + vignette pour
-     garder le texte lisible. */
+  /* Démo de bots visible derrière + léger assombrissement global + vignette
+     pour garder le texte parfaitement lisible. */
   background:
-    radial-gradient(120% 80% at 50% 50%, transparent 30%, rgba(11, 14, 20, 0.55) 75%, rgba(11, 14, 20, 0.8) 100%);
+    linear-gradient(rgba(11, 14, 20, 0.45), rgba(11, 14, 20, 0.45)),
+    radial-gradient(120% 80% at 50% 50%, transparent 25%, rgba(11, 14, 20, 0.55) 72%, rgba(11, 14, 20, 0.85) 100%);
 }
 
 .home-title {
@@ -172,13 +173,6 @@ body,
   width: 180px;
 }
 
-.home-actions {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
 .home-cta {
   padding: 14px 44px;
   font-size: 20px;
@@ -196,19 +190,80 @@ body,
   transform: translateY(-1px);
 }
 
-.home-secondary {
-  padding: 14px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #e5e7eb;
-  background: #1f2937;
-  border: 1px solid #334155;
-  border-radius: 10px;
-  cursor: pointer;
+/* Rangée des sorts équipés (accroche vers le grimoire). */
+.home-loadout-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
-.home-secondary:hover {
-  background: #334155;
+.home-loadout {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.home-slot {
+  position: relative;
+  width: 104px;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 10px;
+  color: #e5e7eb;
+  background: rgba(19, 24, 36, 0.72);
+  border: 1px solid var(--slot-color, #334155);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.home-slot:hover {
+  transform: translateY(-2px);
+  background: rgba(19, 24, 36, 0.92);
+}
+
+.home-slot.empty {
+  border-style: dashed;
+  border-color: #3b4657;
+  color: #64748b;
+}
+
+.home-slot-key {
+  position: absolute;
+  top: 5px;
+  left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.home-slot-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--slot-color, #64748b);
+  box-shadow: 0 0 12px var(--slot-color, transparent);
+}
+
+.home-slot-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.home-slot-plus {
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.home-loadout-caption {
+  color: #64748b;
+  font-size: 12px;
 }
 
 .home-stats {
