@@ -6,30 +6,37 @@ import { Renderer } from './render/renderer';
 import { InputManager } from './input/inputManager';
 import { computeBotInput } from './ai/bot';
 import { Overlay, type MatchResult } from './ui/overlay';
+import { Menu } from './ui/menu';
+import { store } from './storage/localStore';
 
 const LOCAL_PLAYER_ID = 'you';
 
-type MatchStatus = 'playing' | 'over';
+type MatchStatus = 'menu' | 'playing' | 'over';
 
 /**
  * Orchestre la boucle de jeu : entrées -> simulation (pas fixe) -> rendu,
- * et gère le déroulé d'une manche (fin de partie, rejouer).
+ * et gère le déroulé d'une manche (menu, fin de partie, rejouer).
  */
 export class Game {
   private world: WorldState;
   private renderer: Renderer;
   private input: InputManager;
   private overlay: Overlay;
+  private menu: Menu;
   private accumulator = 0;
   private lastTime = 0;
   private running = false;
-  private status: MatchStatus = 'playing';
+  private status: MatchStatus = 'menu';
 
   constructor(canvas: HTMLCanvasElement) {
-    this.world = createWorld();
+    this.world = createWorld(store.getPlayerName());
     this.renderer = new Renderer(canvas);
     this.input = new InputManager(canvas);
-    this.overlay = new Overlay(() => this.restart());
+    this.overlay = new Overlay(
+      () => this.startMatch(),
+      () => this.openMenu(),
+    );
+    this.menu = new Menu(() => this.startMatch());
 
     this.handleResize();
     window.addEventListener('resize', () => this.handleResize());
@@ -38,14 +45,25 @@ export class Game {
   start(): void {
     this.running = true;
     this.lastTime = performance.now();
+    this.openMenu();
     requestAnimationFrame(this.frame);
   }
 
-  private restart(): void {
-    this.world = createWorld();
+  private openMenu(): void {
+    this.status = 'menu';
+    this.overlay.hideGameOver();
+    this.overlay.clearStatus();
+    this.menu.show();
+  }
+
+  /** Démarre (ou relance) une manche avec les paramètres courants. */
+  private startMatch(): void {
+    this.input.reloadBindings();
+    this.world = createWorld(store.getPlayerName());
     this.status = 'playing';
     this.accumulator = 0;
     this.lastTime = performance.now();
+    this.menu.hide();
     this.overlay.hideGameOver();
   }
 
@@ -61,7 +79,7 @@ export class Game {
     // Garde-fou : évite un rattrapage géant après un onglet en arrière-plan.
     if (elapsed > 0.25) elapsed = 0.25;
 
-    // La simulation ne tourne que pendant la manche (l'écran de fin la fige).
+    // La simulation ne tourne que pendant la manche (menu/fin la figent).
     if (this.status === 'playing') {
       this.accumulator += elapsed;
       while (this.accumulator >= CONFIG.fixedDt) {
@@ -69,9 +87,9 @@ export class Game {
         this.accumulator -= CONFIG.fixedDt;
         if (this.checkMatchEnd()) break;
       }
+      this.updateStatusUi();
     }
 
-    this.updateStatusUi();
     this.renderer.render(this.world);
     requestAnimationFrame(this.frame);
   };

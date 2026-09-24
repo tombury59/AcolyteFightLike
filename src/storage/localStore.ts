@@ -1,7 +1,7 @@
-import { DEFAULT_BINDINGS, type Bindings } from '../input/keybindings';
+import { DEFAULT_SPELL_BINDINGS, type SpellBindings } from '../input/keybindings';
 
 const KEYS = {
-  bindings: 'afl.bindings',
+  spellBindings: 'afl.spellBindings',
   playerName: 'afl.playerName',
 } as const;
 
@@ -23,12 +23,15 @@ function write<T>(key: string, value: T): void {
 }
 
 export const store = {
-  getBindings(): Bindings {
+  getSpellBindings(): SpellBindings {
     // Fusionne avec les valeurs par défaut pour tolérer des versions partielles.
-    return { ...DEFAULT_BINDINGS, ...read<Partial<Bindings>>(KEYS.bindings, {}) } as Bindings;
+    return {
+      ...DEFAULT_SPELL_BINDINGS,
+      ...read<Partial<SpellBindings>>(KEYS.spellBindings, {}),
+    } as SpellBindings;
   },
-  setBindings(b: Bindings): void {
-    write(KEYS.bindings, b);
+  setSpellBindings(b: SpellBindings): void {
+    write(KEYS.spellBindings, b);
   },
   getPlayerName(): string {
     return read<string>(KEYS.playerName, 'Acolyte');

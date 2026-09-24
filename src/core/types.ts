@@ -15,6 +15,8 @@ export interface PlayerInput {
 
 export interface Player {
   id: string;
+  /** Nom affiché (pseudo du joueur ou nom de bot). */
+  name: string;
   pos: Vec2;
   vel: Vec2;
   radius: number;

@@ -111,6 +111,14 @@ export class Renderer {
     ctx.fillRect(bx, by, barW, barH);
     ctx.fillStyle = '#4ade80';
     ctx.fillRect(bx, by, barW * (p.health / CONFIG.player.maxHealth), barH);
+
+    // Nom au-dessus de la barre de vie.
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(p.name, s.x, by - 4);
+    ctx.textAlign = 'left';
   }
 
   /** Barre de sorts en bas de l'écran avec l'état de recharge du joueur local. */

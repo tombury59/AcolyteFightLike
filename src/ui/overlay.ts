@@ -10,7 +10,10 @@ export class Overlay {
   private gameOverEl: HTMLDivElement;
   private titleEl: HTMLDivElement;
 
-  constructor(private onReplay: () => void) {
+  constructor(
+    private onReplay: () => void,
+    private onMenu: () => void,
+  ) {
     this.timerEl = document.createElement('div');
     this.timerEl.className = 'timer';
     document.body.appendChild(this.timerEl);
@@ -21,18 +24,33 @@ export class Overlay {
     this.titleEl = document.createElement('div');
     this.titleEl.className = 'gameover-title';
 
-    const button = document.createElement('button');
-    button.textContent = 'Rejouer';
-    button.addEventListener('click', () => this.onReplay());
+    const buttons = document.createElement('div');
+    buttons.className = 'gameover-buttons';
+
+    const replay = document.createElement('button');
+    replay.textContent = 'Rejouer';
+    replay.addEventListener('click', () => this.onReplay());
+
+    const menu = document.createElement('button');
+    menu.className = 'secondary';
+    menu.textContent = 'Menu';
+    menu.addEventListener('click', () => this.onMenu());
+
+    buttons.appendChild(replay);
+    buttons.appendChild(menu);
 
     this.gameOverEl.appendChild(this.titleEl);
-    this.gameOverEl.appendChild(button);
+    this.gameOverEl.appendChild(buttons);
     document.body.appendChild(this.gameOverEl);
   }
 
   setStatus(timeLeft: number, aliveCount: number): void {
     const s = Math.max(0, Math.ceil(timeLeft));
     this.timerEl.textContent = `${s}s · ${aliveCount} en vie`;
+  }
+
+  clearStatus(): void {
+    this.timerEl.textContent = '';
   }
 
   showGameOver(result: MatchResult): void {
