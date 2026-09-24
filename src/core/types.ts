@@ -40,9 +40,12 @@ export interface Projectile {
   pos: Vec2;
   vel: Vec2;
   radius: number;
+  /** Dégâts par seconde infligés à une cible en contact. */
   damage: number;
-  /** Force de recul transmise à la cible touchée. */
+  /** Vitesse de portage transmise à la cible touchée. */
   knockback: number;
+  /** Si vrai, traverse les cibles (ne disparaît pas à l'impact). */
+  pierce: boolean;
   /** Durée de vie restante en secondes. */
   life: number;
   color: string;

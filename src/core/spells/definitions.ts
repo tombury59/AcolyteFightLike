@@ -7,11 +7,12 @@ export const SPELLS: Record<string, Spell> = {
     type: 'projectile',
     cooldown: 1.5,
     color: '#f97316',
-    speed: 540,
-    damage: 22,
-    radius: 24,
-    lifetime: 1.2,
-    knockback: 900,
+    speed: 160, // lente
+    damage: 10, // très peu (par seconde de contact)
+    radius: 72, // énorme
+    lifetime: 4, // traverse presque toute l'arène
+    knockback: 180, // ~= vitesse -> emporte la cible sur toute la trajectoire
+    pierce: true, // ne disparaît pas à l'impact
   },
   dash: {
     id: 'dash',

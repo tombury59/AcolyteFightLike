@@ -64,10 +64,22 @@ export class Renderer {
   private drawProjectile(proj: Projectile): void {
     const { ctx, camera } = this;
     const s = camera.worldToScreen(proj.pos);
+    const r = proj.radius * camera.zoom;
+
+    // Corps translucide (on voit les joueurs emportés à l'intérieur).
+    ctx.globalAlpha = 0.5;
     ctx.beginPath();
-    ctx.arc(s.x, s.y, proj.radius * camera.zoom, 0, Math.PI * 2);
+    ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
     ctx.fillStyle = proj.color;
     ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Contour net.
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = proj.color;
+    ctx.stroke();
   }
 
   private drawPlayer(p: Player): void {

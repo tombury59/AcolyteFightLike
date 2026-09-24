@@ -14,12 +14,18 @@ interface BaseSpell {
 export interface ProjectileSpell extends BaseSpell {
   type: 'projectile';
   speed: number;
+  /** Dégâts PAR SECONDE tant que la cible reste dans le projectile. */
   damage: number;
   radius: number;
   /** Durée de vie du projectile (s) -> détermine la portée. */
   lifetime: number;
-  /** Force de recul appliquée à la cible touchée (unités/s de vitesse initiale). */
+  /**
+   * Vitesse à laquelle la cible est poussée (portée) dans la direction du tir.
+   * Proche de `speed` -> la cible est emportée sur toute la trajectoire.
+   */
   knockback: number;
+  /** Si vrai, le projectile traverse les cibles au lieu de disparaître à l'impact. */
+  pierce: boolean;
 }
 
 export interface DashSpell extends BaseSpell {

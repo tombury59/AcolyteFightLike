@@ -99,6 +99,7 @@ function tryCast(world: WorldState, caster: Player, spellId: string): void {
         radius: spell.radius,
         damage: spell.damage,
         knockback: spell.knockback,
+        pierce: spell.pierce,
         life: spell.lifetime,
         color: spell.color,
       };
@@ -123,17 +124,21 @@ function updateProjectiles(world: WorldState, dt: number): void {
     proj.life -= dt;
     if (proj.life <= 0) continue;
 
+    const dir = normalize(proj.vel);
     let consumed = false;
     for (const p of world.players) {
       if (!p.alive || p.id === proj.ownerId) continue;
       if (dist(proj.pos, p.pos) <= proj.radius + p.radius) {
-        applyDamage(p, proj.damage);
-        // Recul : la cible est projetée dans la direction du tir.
-        const kb = normalize(proj.vel);
-        p.knockback.x += kb.x * proj.knockback;
-        p.knockback.y += kb.y * proj.knockback;
-        consumed = true;
-        break;
+        // Dégâts par seconde tant que la cible reste dans le projectile.
+        applyDamage(p, proj.damage * dt);
+        // Portage : on impose la vitesse de poussée dans la direction du tir.
+        // Tant que la cible reste dans la boule, elle est emportée avec elle.
+        p.knockback.x = dir.x * proj.knockback;
+        p.knockback.y = dir.y * proj.knockback;
+        if (!proj.pierce) {
+          consumed = true;
+          break;
+        }
       }
     }
     if (!consumed) survivors.push(proj);
