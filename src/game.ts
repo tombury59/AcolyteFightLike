@@ -6,7 +6,7 @@ import { Renderer } from './render/renderer';
 import { InputManager } from './input/inputManager';
 import { computeBotInput } from './ai/bot';
 import { Overlay, type MatchResult } from './ui/overlay';
-import { Menu } from './ui/menu';
+import { Home } from './ui/home';
 import { store } from './storage/localStore';
 import { ParticleSystem } from './render/effects';
 import { sfx } from './audio/sfx';
@@ -24,7 +24,7 @@ export class Game {
   private renderer: Renderer;
   private input: InputManager;
   private overlay: Overlay;
-  private menu: Menu;
+  private home: Home;
   private effects = new ParticleSystem();
   private accumulator = 0;
   private lastTime = 0;
@@ -35,14 +35,14 @@ export class Game {
   private knownProjectiles = new Set<number>();
 
   constructor(canvas: HTMLCanvasElement) {
-    this.world = createWorld(store.getPlayerName());
+    this.world = createWorld(store.getPlayerName(), store.getLoadout());
     this.renderer = new Renderer(canvas);
     this.input = new InputManager(canvas);
     this.overlay = new Overlay(
       () => this.startMatch(),
-      () => this.openMenu(),
+      () => this.openHome(),
     );
-    this.menu = new Menu(() => this.startMatch());
+    this.home = new Home(() => this.startMatch());
 
     this.handleResize();
     window.addEventListener('resize', () => this.handleResize());
@@ -51,29 +51,29 @@ export class Game {
   start(): void {
     this.running = true;
     this.lastTime = performance.now();
-    this.openMenu();
+    this.openHome();
     requestAnimationFrame(this.frame);
   }
 
-  private openMenu(): void {
+  private openHome(): void {
     this.status = 'menu';
     this.overlay.hideGameOver();
     this.overlay.clearStatus();
-    this.menu.show();
+    this.home.show();
   }
 
   /** Démarre (ou relance) une manche avec les paramètres courants. */
   private startMatch(): void {
     sfx.resume(); // geste utilisateur -> autorise l'audio
-    this.input.reloadBindings();
-    this.world = createWorld(store.getPlayerName());
+    this.input.reloadLoadout();
+    this.world = createWorld(store.getPlayerName(), store.getLoadout());
     this.status = 'playing';
     this.accumulator = 0;
     this.lastTime = performance.now();
     this.effects.particles = [];
     this.prevAlive = new Set(this.world.players.filter((p) => p.alive).map((p) => p.id));
     this.knownProjectiles.clear();
-    this.menu.hide();
+    this.home.hide();
     this.overlay.hideGameOver();
   }
 

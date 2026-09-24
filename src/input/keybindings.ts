@@ -1,32 +1,14 @@
-/** Déclencheurs de sorts : id de sort -> codes qui l'activent. */
-export type SpellBindings = Record<string, string[]>;
+/** Nombre d'emplacements de sorts. */
+export const SLOT_COUNT = 4;
 
 /**
- * Boutons souris encodés `Mouse0` (gauche) / `Mouse2` (droit).
- * Digit1/Digit2 = touches `&` et `é` sur AZERTY (le code ignore la disposition).
+ * Déclencheurs par EMPLACEMENT (index 0..3). Le sort équipé dans un emplacement
+ * est lancé par ces touches. Boutons souris encodés `Mouse0`/`Mouse2`.
+ * Digit1..4 = touches `&`, `é`, `"`, `'` sur AZERTY (le code ignore la disposition).
  */
-export const DEFAULT_SPELL_BINDINGS: SpellBindings = {
-  fireball: ['Mouse0', 'Space', 'Digit1', 'Numpad1'],
-  dash: ['Mouse2', 'ShiftLeft', 'Digit2', 'Numpad2'],
-};
-
-/** Libellé lisible pour un code touche/souris. */
-export function formatCode(code: string): string {
-  const map: Record<string, string> = {
-    Mouse0: 'Clic gauche',
-    Mouse1: 'Clic milieu',
-    Mouse2: 'Clic droit',
-    Space: 'Espace',
-    ShiftLeft: 'Maj G',
-    ShiftRight: 'Maj D',
-    ControlLeft: 'Ctrl G',
-    ControlRight: 'Ctrl D',
-    AltLeft: 'Alt',
-  };
-  if (map[code]) return map[code];
-  if (code.startsWith('Key')) return code.slice(3);
-  if (code.startsWith('Digit')) return code.slice(5);
-  if (code.startsWith('Numpad')) return `Pavé ${code.slice(6)}`;
-  if (code.startsWith('Arrow')) return code.slice(5);
-  return code;
-}
+export const SLOT_TRIGGERS: string[][] = [
+  ['Mouse0', 'Space', 'Digit1', 'Numpad1'],
+  ['Mouse2', 'ShiftLeft', 'Digit2', 'Numpad2'],
+  ['Digit3', 'Numpad3', 'KeyE'],
+  ['Digit4', 'Numpad4', 'KeyR'],
+];

@@ -136,7 +136,7 @@ export class Renderer {
     ctx.textAlign = 'left';
   }
 
-  /** Barre de sorts en bas de l'écran avec l'état de recharge du joueur local. */
+  /** Barre des 4 emplacements en bas de l'écran (état de recharge du joueur local). */
   private drawHud(world: WorldState): void {
     const { ctx, camera } = this;
     const me = world.players.find((p) => p.id === LOCAL_PLAYER_ID);
@@ -144,40 +144,41 @@ export class Renderer {
 
     const size = 52;
     const gap = 10;
-    const total = me.spellSet.length * size + (me.spellSet.length - 1) * gap;
+    const slots = me.spellSlots;
+    const total = slots.length * size + (slots.length - 1) * gap;
     let x = camera.viewWidth / 2 - total / 2;
     const y = camera.viewHeight - size - 28;
 
-    me.spellSet.forEach((spellId, i) => {
-      const spell = SPELLS[spellId];
-      if (!spell) return;
-      const cd = me.cooldowns[spellId] ?? 0;
-      const frac = cd > 0 ? cd / spell.cooldown : 0;
+    slots.forEach((spellId, i) => {
+      const spell = spellId ? SPELLS[spellId] : undefined;
 
-      // Case.
+      // Case (couleur du sort si équipé, sinon vide/grisé).
       ctx.fillStyle = '#131824';
       ctx.fillRect(x, y, size, size);
       ctx.lineWidth = 2;
-      ctx.strokeStyle = spell.color;
+      ctx.strokeStyle = spell ? spell.color : '#374151';
       ctx.strokeRect(x, y, size, size);
 
-      // Voile de recharge (se vide du bas vers le haut).
-      if (frac > 0) {
-        ctx.fillStyle = 'rgba(11, 14, 20, 0.72)';
-        ctx.fillRect(x, y, size, size * frac);
+      if (spell) {
+        const cd = me.cooldowns[spellId!] ?? 0;
+        const frac = cd > 0 ? cd / spell.cooldown : 0;
+        if (frac > 0) {
+          ctx.fillStyle = 'rgba(11, 14, 20, 0.72)';
+          ctx.fillRect(x, y, size, size * frac);
+        }
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = 'left';
+        ctx.fillText(spell.name, x + 5, y + size - 4);
       }
 
-      // Numéro d'emplacement.
-      ctx.fillStyle = '#e5e7eb';
+      // Numéro d'emplacement (= touche).
+      ctx.fillStyle = spell ? '#e5e7eb' : '#4b5563';
       ctx.font = '12px system-ui, sans-serif';
       ctx.textBaseline = 'top';
+      ctx.textAlign = 'left';
       ctx.fillText(String(i + 1), x + 5, y + 4);
-
-      // Nom du sort.
-      ctx.fillStyle = '#9ca3af';
-      ctx.font = '11px system-ui, sans-serif';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(spell.name, x + 5, y + size - 4);
 
       x += size + gap;
     });

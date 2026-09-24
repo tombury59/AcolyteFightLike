@@ -1,7 +1,8 @@
-import { DEFAULT_SPELL_BINDINGS, type SpellBindings } from '../input/keybindings';
+import { SLOT_COUNT } from '../input/keybindings';
+import { DEFAULT_SPELL_SET } from '../core/spells/definitions';
 
 const KEYS = {
-  spellBindings: 'afl.spellBindings',
+  loadout: 'afl.loadout',
   playerName: 'afl.playerName',
   stats: 'afl.stats',
 } as const;
@@ -14,6 +15,17 @@ export interface Stats {
 }
 
 const DEFAULT_STATS: Stats = { played: 0, won: 0, bestTime: 0 };
+
+export type Loadout = (string | null)[];
+
+/** Loadout par défaut : sorts par défaut placés dans les premiers emplacements. */
+function defaultLoadout(): Loadout {
+  const slots: Loadout = Array(SLOT_COUNT).fill(null);
+  DEFAULT_SPELL_SET.forEach((id, i) => {
+    if (i < SLOT_COUNT) slots[i] = id;
+  });
+  return slots;
+}
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -33,15 +45,16 @@ function write<T>(key: string, value: T): void {
 }
 
 export const store = {
-  getSpellBindings(): SpellBindings {
-    // Fusionne avec les valeurs par défaut pour tolérer des versions partielles.
-    return {
-      ...DEFAULT_SPELL_BINDINGS,
-      ...read<Partial<SpellBindings>>(KEYS.spellBindings, {}),
-    } as SpellBindings;
+  getLoadout(): Loadout {
+    const raw = read<Loadout | null>(KEYS.loadout, null);
+    if (!Array.isArray(raw)) return defaultLoadout();
+    // Normalise à SLOT_COUNT emplacements.
+    const slots: Loadout = Array(SLOT_COUNT).fill(null);
+    for (let i = 0; i < SLOT_COUNT; i++) slots[i] = raw[i] ?? null;
+    return slots;
   },
-  setSpellBindings(b: SpellBindings): void {
-    write(KEYS.spellBindings, b);
+  setLoadout(loadout: Loadout): void {
+    write(KEYS.loadout, loadout);
   },
   getPlayerName(): string {
     return read<string>(KEYS.playerName, 'Acolyte');

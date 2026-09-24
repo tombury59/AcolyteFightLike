@@ -30,8 +30,8 @@ export interface Player {
   knockback: Vec2;
   color: string;
   isBot: boolean;
-  /** Sorts équipés (ids), affichés dans le HUD. */
-  spellSet: string[];
+  /** Emplacements de sorts (longueur fixe, `null` = vide). L'index = la touche. */
+  spellSlots: (string | null)[];
   /** Temps de recharge restant par sort (id -> secondes). */
   cooldowns: Record<string, number>;
 }

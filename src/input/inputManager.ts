@@ -1,22 +1,23 @@
 import type { PlayerInput, Vec2 } from '../core/types';
 import type { Camera } from '../render/camera';
-import type { SpellBindings } from './keybindings';
-import { store } from '../storage/localStore';
+import { SLOT_TRIGGERS } from './keybindings';
+import { store, type Loadout } from '../storage/localStore';
 
 /**
  * Écoute la souris et produit un PlayerInput par frame.
  * Contrôle « le personnage suit la souris » : pas de touches de déplacement.
+ * Les sorts sont lancés par emplacement (voir SLOT_TRIGGERS) selon le loadout.
  */
 export class InputManager {
   private pressed = new Set<string>();
   private mouseScreen: Vec2 = { x: 0, y: 0 };
   /** Tant que la souris n'a pas bougé, on ne fait pas foncer le perso au coin. */
   private hasMouseMoved = false;
-  /** Déclencheurs de sorts, configurables (chargés depuis localStorage). */
-  private spellBindings: SpellBindings;
+  /** Loadout courant (sort par emplacement), chargé depuis localStorage. */
+  private loadout: Loadout;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.spellBindings = store.getSpellBindings();
+    this.loadout = store.getLoadout();
 
     canvas.addEventListener('mousemove', (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -25,7 +26,7 @@ export class InputManager {
     });
     canvas.addEventListener('mousedown', (e) => this.pressed.add(`Mouse${e.button}`));
     window.addEventListener('mouseup', (e) => this.pressed.delete(`Mouse${e.button}`));
-    // Empêche le menu contextuel sur clic droit (utilisé pour le dash).
+    // Empêche le menu contextuel sur clic droit (utilisé pour un sort).
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
     window.addEventListener('keydown', (e) => {
@@ -42,16 +43,17 @@ export class InputManager {
     return codes.some((c) => this.pressed.has(c));
   }
 
-  /** Recharge les déclencheurs de sorts (après un changement dans les paramètres). */
-  reloadBindings(): void {
-    this.spellBindings = store.getSpellBindings();
+  /** Recharge le loadout (après un changement dans la page d'accueil). */
+  reloadLoadout(): void {
+    this.loadout = store.getLoadout();
   }
 
   /** Construit l'entrée de la frame. `camera` situe la souris dans le monde. */
   getInput(camera: Camera): PlayerInput {
     const castSpells: string[] = [];
-    for (const spellId in this.spellBindings) {
-      if (this.isDown(this.spellBindings[spellId])) castSpells.push(spellId);
+    for (let slot = 0; slot < SLOT_TRIGGERS.length; slot++) {
+      const spellId = this.loadout[slot];
+      if (spellId && this.isDown(SLOT_TRIGGERS[slot])) castSpells.push(spellId);
     }
 
     return {

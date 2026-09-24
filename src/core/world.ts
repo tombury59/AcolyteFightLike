@@ -9,6 +9,7 @@ export function createPlayer(
   x: number,
   y: number,
   color: string,
+  spellSlots: (string | null)[],
   isBot = false,
 ): Player {
   return {
@@ -24,24 +25,31 @@ export function createPlayer(
     knockback: vec(0, 0),
     color,
     isBot,
-    spellSet: [...DEFAULT_SPELL_SET],
+    spellSlots: [...spellSlots],
     cooldowns: {},
   };
 }
 
 const BOT_COLORS = ['#f87171', '#c084fc', '#fbbf24'];
 
-/** Crée un monde neuf : le joueur au centre + des bots répartis en cercle. */
-export function createWorld(playerName = 'Acolyte'): WorldState {
+/**
+ * Crée un monde neuf : le joueur au centre (avec son loadout) + des bots.
+ * `loadout` : sorts équipés par emplacement pour le joueur local.
+ */
+export function createWorld(
+  playerName = 'Acolyte',
+  loadout: (string | null)[] = DEFAULT_SPELL_SET,
+): WorldState {
   const center = vec(0, 0);
-  const players = [createPlayer('you', playerName, center.x, center.y, '#4ade80', false)];
+  const players = [createPlayer('you', playerName, center.x, center.y, '#4ade80', loadout, false)];
 
+  const botSlots = [...DEFAULT_SPELL_SET];
   const spawnRadius = 320;
   BOT_COLORS.forEach((color, i) => {
     const angle = (i / BOT_COLORS.length) * Math.PI * 2;
     const x = center.x + Math.cos(angle) * spawnRadius;
     const y = center.y + Math.sin(angle) * spawnRadius;
-    players.push(createPlayer(`bot${i}`, `Bot ${i + 1}`, x, y, color, true));
+    players.push(createPlayer(`bot${i}`, `Bot ${i + 1}`, x, y, color, botSlots, true));
   });
 
   return {
