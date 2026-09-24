@@ -9,8 +9,12 @@ export interface Spell {
   name: string;
   /** Temps de recharge en secondes. */
   cooldown: number;
-  /** Couleur d'affichage (HUD). */
+  /** Couleur PRINCIPALE du sort (HUD, projectiles, grimoire...). */
   color: string;
+  /** Résumé affiché dans le grimoire. */
+  description: string;
+  /** Clé du visuel animé du grimoire (ex. 'orb', 'blink'). */
+  preview: string;
   /** Applique l'effet du sort (spawn de projectile, dash, etc.). */
   cast(world: WorldState, caster: Player): void;
 }

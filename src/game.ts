@@ -1,5 +1,5 @@
 import type { PlayerInput, WorldState } from './core/types';
-import { createWorld } from './core/world';
+import { createWorld, createDemoWorld } from './core/world';
 import { step } from './core/simulation';
 import { CONFIG } from './core/config';
 import { Renderer } from './render/renderer';
@@ -33,9 +33,15 @@ export class Game {
   /** Suivi d'état pour détecter morts et apparitions de projectiles (effets). */
   private prevAlive = new Set<string>();
   private knownProjectiles = new Set<number>();
+  /** Monde de démo animé en fond de menu + son propre accumulateur. */
+  private demoWorld: WorldState;
+  private demoAccumulator = 0;
+  /** Décalage parallax normalisé (-1..1) piloté par la souris.  */
+  private parallax = { x: 0, y: 0 };
 
   constructor(canvas: HTMLCanvasElement) {
     this.world = createWorld(store.getPlayerName(), store.getLoadout());
+    this.demoWorld = createDemoWorld();
     this.renderer = new Renderer(canvas);
     this.input = new InputManager(canvas);
     this.overlay = new Overlay(
@@ -43,6 +49,13 @@ export class Game {
       () => this.openHome(),
     );
     this.home = new Home(() => this.startMatch());
+
+    window.addEventListener('mousemove', (e) => {
+      this.parallax = {
+        x: (e.clientX / window.innerWidth - 0.5) * 2,
+        y: (e.clientY / window.innerHeight - 0.5) * 2,
+      };
+    });
 
     this.handleResize();
     window.addEventListener('resize', () => this.handleResize());
@@ -89,7 +102,15 @@ export class Game {
     // Garde-fou : évite un rattrapage géant après un onglet en arrière-plan.
     if (elapsed > 0.25) elapsed = 0.25;
 
-    // La simulation ne tourne que pendant la manche (menu/fin la figent).
+    if (this.status === 'menu') {
+      // Fond de menu : démo de bots + parallax, sans HUD/barres de vie.
+      this.stepDemo(elapsed);
+      this.renderer.render(this.demoWorld, [], { minimal: true, parallax: this.parallax });
+      requestAnimationFrame(this.frame);
+      return;
+    }
+
+    // La simulation ne tourne que pendant la manche (l'écran de fin la fige).
     if (this.status === 'playing') {
       this.accumulator += elapsed;
       while (this.accumulator >= CONFIG.fixedDt) {
@@ -106,6 +127,22 @@ export class Game {
     this.renderer.render(this.world, this.effects.particles);
     requestAnimationFrame(this.frame);
   };
+
+  /** Fait tourner la démo de fond (bots seuls), réinitialisée quand il n'en reste qu'un. */
+  private stepDemo(elapsed: number): void {
+    this.demoAccumulator += elapsed;
+    while (this.demoAccumulator >= CONFIG.fixedDt) {
+      const inputs = new Map<string, PlayerInput>();
+      for (const p of this.demoWorld.players) {
+        if (p.alive) inputs.set(p.id, computeBotInput(this.demoWorld, p));
+      }
+      step(this.demoWorld, inputs, CONFIG.fixedDt);
+      this.demoAccumulator -= CONFIG.fixedDt;
+      if (this.demoWorld.players.filter((p) => p.alive).length <= 1) {
+        this.demoWorld = createDemoWorld();
+      }
+    }
+  }
 
   /** Détecte morts et nouveaux projectiles pour déclencher effets et sons. */
   private detectEvents(): void {

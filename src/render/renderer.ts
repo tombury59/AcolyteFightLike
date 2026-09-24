@@ -6,17 +6,36 @@ import type { Particle } from './effects';
 
 const LOCAL_PLAYER_ID = 'you';
 
+/** Options de rendu (mode démo, décalage parallax). */
+export interface RenderOptions {
+  /** Cache barres de vie, noms et HUD (fond de menu). */
+  minimal?: boolean;
+  /** Décalage parallax normalisé (-1..1) piloté par la souris. */
+  parallax?: { x: number; y: number };
+}
+
+interface Star {
+  x: number;
+  y: number;
+  r: number;
+  alpha: number;
+}
+
+/** Amplitude du parallax : la scène (proche) bouge plus que les étoiles (loin). */
+const NEAR_PARALLAX = 60; // unités monde
+const STAR_PARALLAX = 16; // pixels
+
 /** Rendu du monde sur un canvas 2D. Aucune logique de jeu ici. */
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
   camera: Camera;
+  private stars: Star[] = [];
 
   constructor(private canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas 2D non disponible');
     this.ctx = ctx;
     this.camera = new Camera(canvas.width, canvas.height);
-    // La caméra reste centrée sur l'arène (origine du monde).
     this.camera.target = { x: 0, y: 0 };
   }
 
@@ -24,22 +43,54 @@ export class Renderer {
     this.canvas.width = w;
     this.canvas.height = h;
     this.camera.resize(w, h);
-    // Zoom pour que toute l'arène de départ tienne à l'écran, avec une marge.
     const diameter = CONFIG.arena.startRadius * 2 * 1.12;
     this.camera.zoom = Math.min(w, h) / diameter;
+    this.generateStars(w, h);
   }
 
-  render(world: WorldState, particles: Particle[] = []): void {
+  private generateStars(w: number, h: number): void {
+    const count = Math.round((w * h) / 9000);
+    this.stars = Array.from({ length: count }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 1.6 + 0.4,
+      alpha: Math.random() * 0.5 + 0.15,
+    }));
+  }
+
+  render(world: WorldState, particles: Particle[] = [], opts: RenderOptions = {}): void {
     const { ctx, camera } = this;
+
+    // Décalage parallax de la scène (couche proche).
+    camera.target = opts.parallax
+      ? { x: opts.parallax.x * NEAR_PARALLAX, y: opts.parallax.y * NEAR_PARALLAX }
+      : { x: 0, y: 0 };
 
     ctx.fillStyle = '#0b0e14';
     ctx.fillRect(0, 0, camera.viewWidth, camera.viewHeight);
 
+    if (opts.parallax) this.drawStars(opts.parallax);
+
     this.drawArena(world);
     for (const proj of world.projectiles) this.drawProjectile(proj);
-    for (const p of world.players) this.drawPlayer(p);
+    for (const p of world.players) this.drawPlayer(p, opts.minimal ?? false);
     this.drawParticles(particles);
-    this.drawHud(world);
+    if (!opts.minimal) this.drawHud(world);
+  }
+
+  /** Champ d'étoiles en fond, décalé faiblement (couche lointaine du parallax). */
+  private drawStars(parallax: { x: number; y: number }): void {
+    const { ctx } = this;
+    const ox = parallax.x * STAR_PARALLAX;
+    const oy = parallax.y * STAR_PARALLAX;
+    ctx.fillStyle = '#e5e7eb';
+    for (const s of this.stars) {
+      ctx.globalAlpha = s.alpha;
+      ctx.beginPath();
+      ctx.arc(s.x + ox, s.y + oy, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   }
 
   private drawParticles(particles: Particle[]): void {
@@ -97,7 +148,7 @@ export class Renderer {
     ctx.stroke();
   }
 
-  private drawPlayer(p: Player): void {
+  private drawPlayer(p: Player, minimal: boolean): void {
     const { ctx, camera } = this;
     if (!p.alive) return;
 
@@ -117,7 +168,9 @@ export class Renderer {
     ctx.strokeStyle = '#e5e7eb';
     ctx.stroke();
 
-    // Barre de vie.
+    // En mode démo (fond de menu) : pas de barre de vie ni de nom.
+    if (minimal) return;
+
     const barW = r * 2.4;
     const barH = 5;
     const bx = s.x - barW / 2;
@@ -127,7 +180,6 @@ export class Renderer {
     ctx.fillStyle = '#4ade80';
     ctx.fillRect(bx, by, barW * (p.health / CONFIG.player.maxHealth), barH);
 
-    // Nom au-dessus de la barre de vie.
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '12px system-ui, sans-serif';
     ctx.textAlign = 'center';

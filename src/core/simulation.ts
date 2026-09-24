@@ -56,8 +56,8 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
   // 3. Projectiles : chaque projectile est mis à jour par SON comportement.
   updateProjectiles(world, dt);
 
-  // 4. Rétrécissement de l'arène.
-  if (world.time > CONFIG.arena.shrinkDelay) {
+  // 4. Rétrécissement de l'arène (sauf en mode démo).
+  if (world.arenaShrinks && world.time > CONFIG.arena.shrinkDelay) {
     world.arenaRadius = Math.max(
       CONFIG.arena.minRadius,
       world.arenaRadius - CONFIG.arena.shrinkRate * dt,

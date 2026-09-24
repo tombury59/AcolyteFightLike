@@ -23,6 +23,10 @@ export const fireball: Spell = {
   name: 'Boule de feu',
   cooldown: COOLDOWN,
   color: COLOR,
+  description:
+    'Un orbe géant et lent qui traverse tout et pousse les ennemis devant lui. ' +
+    'Peu de dégâts, mais idéal pour éjecter un rival hors de l’arène.',
+  preview: 'orb',
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({

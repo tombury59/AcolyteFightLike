@@ -63,6 +63,8 @@ export interface WorldState {
   nextProjectileId: number;
   /** Centre de l'arène (monde). */
   arenaCenter: Vec2;
-  /** Rayon courant de l'arène, décroît avec le temps. */
+  /** Rayon courant de l'arène, décroît avec le temps si `arenaShrinks`. */
   arenaRadius: number;
+  /** Si vrai, l'arène rétrécit au fil du temps (désactivé en mode démo). */
+  arenaShrinks: boolean;
 }
