@@ -785,13 +785,16 @@ body,
 
 .spell-card-actions {
   display: flex;
-  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
   margin-top: auto;
 }
 
 .spell-card-btn {
-  flex: 1;
+  width: 40px;
   height: 28px;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -800,7 +803,7 @@ body,
   border: 1px solid rgba(90, 58, 28, 0.4);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1;
 }
@@ -814,6 +817,19 @@ body,
   cursor: default;
 }
 
-.spell-card-btn.book {
-  font-size: 15px;
+/* Petite phrase soulignée (ouvre la fiche du sort). */
+.spell-card-link {
+  padding: 2px 0;
+  background: none;
+  border: none;
+  color: #7a552f;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.spell-card-link:hover {
+  color: #6b1a24;
 }

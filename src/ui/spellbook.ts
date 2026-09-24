@@ -273,12 +273,11 @@ export class Spellbook {
       add.title = equipped ? 'Déjà équipé' : full ? 'Emplacements pleins' : 'Équiper';
       add.disabled = equipped || full;
       add.addEventListener('click', () => this.addToFirstEmpty(spell.id));
-      const book = document.createElement('button');
-      book.className = 'spell-card-btn book';
-      book.textContent = '📖';
-      book.title = 'Voir la fiche';
-      book.addEventListener('click', () => this.go(idx + 1));
-      actions.append(add, book);
+      const link = document.createElement('button');
+      link.className = 'spell-card-link';
+      link.textContent = 'Voir la fiche';
+      link.addEventListener('click', () => this.go(idx + 1));
+      actions.append(add, link);
 
       card.append(head, desc, actions);
       container.appendChild(card);
