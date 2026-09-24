@@ -3,17 +3,12 @@ export interface Vec2 {
   y: number;
 }
 
-/** Ce que produit la couche d'entrée (clavier + souris) à chaque frame. */
+/** Ce que produit la couche d'entrée à chaque frame. */
 export interface PlayerInput {
-  /** Direction de déplacement souhaitée, normalisée (0,0 si immobile). */
-  move: Vec2;
-  /** Position visée dans le repère MONDE (curseur souris). */
+  /** Point cible dans le repère MONDE : le personnage s'y dirige et vise vers lui. */
   aim: Vec2;
-  /**
-   * Si vrai, la visée suit la direction de déplacement (souris inactive) :
-   * mode « pad friendly ». La simulation ignore alors `aim`.
-   */
-  aimFromMove: boolean;
+  /** Si vrai, le personnage se déplace vers `aim` (sinon il reste immobile). */
+  follow: boolean;
   /** Ids des sorts dont la touche/bouton est enfoncé cette frame. */
   castSpells: string[];
 }

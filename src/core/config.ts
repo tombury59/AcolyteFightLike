@@ -19,5 +19,7 @@ export const CONFIG = {
     maxHealth: 100,
     /** Dégâts par seconde infligés hors de l'arène. */
     outOfBoundsDps: 20,
+    /** Distance au curseur en deçà de laquelle le personnage s'arrête (anti-jitter). */
+    followStopDist: 8,
   },
 } as const;

@@ -1,5 +1,5 @@
 import type { Player, PlayerInput, Projectile, WorldState } from './types';
-import { normalize, sub, dist, scale } from './vec';
+import { normalize, sub, dist, scale, len } from './vec';
 import { resolvePlayerCollisions } from './physics';
 import { CONFIG } from './config';
 import { SPELLS } from './spells/definitions';
@@ -22,13 +22,22 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
 
     const input = inputs.get(p.id);
     if (input) {
-      const dir = normalize(input.move);
-      p.vel.x = dir.x * p.speed;
-      p.vel.y = dir.y * p.speed;
+      const toAim = sub(input.aim, p.pos);
+      const d = len(toAim);
+      const dir = normalize(toAim);
 
-      // Visée : direction de déplacement (mode pad) sinon curseur souris.
-      const aimDir = input.aimFromMove ? dir : normalize(sub(input.aim, p.pos));
-      if (aimDir.x !== 0 || aimDir.y !== 0) p.facing = aimDir;
+      // Le personnage se dirige vers le curseur, sauf s'il l'a quasiment atteint
+      // (zone morte pour éviter les micro-oscillations autour de la cible).
+      if (input.follow && d > CONFIG.player.followStopDist) {
+        p.vel.x = dir.x * p.speed;
+        p.vel.y = dir.y * p.speed;
+      } else {
+        p.vel.x = 0;
+        p.vel.y = 0;
+      }
+
+      // La visée suit toujours le curseur (même à l'arrêt).
+      if (dir.x !== 0 || dir.y !== 0) p.facing = dir;
 
       for (const spellId of input.castSpells) tryCast(world, p, spellId);
     } else {
