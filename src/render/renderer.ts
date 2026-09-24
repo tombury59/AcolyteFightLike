@@ -208,23 +208,26 @@ export class Renderer {
     ctx.lineCap = 'butt';
   }
 
-  /** Balayage en demi-cercle devant le lanceur. */
+  /** Balayage : une série de points le long de l'arc déjà parcouru (le dernier en tête). */
   private drawArcSwipe(proj: Projectile): void {
     const { ctx, camera } = this;
-    const c = camera.worldToScreen(proj.pos);
-    const r = (proj.params.radius ?? 90) * camera.zoom;
-    const ang = Math.atan2(proj.params.dy ?? 0, proj.params.dx ?? 1);
-    ctx.globalAlpha = 0.4;
-    ctx.beginPath();
-    ctx.moveTo(c.x, c.y);
-    ctx.arc(c.x, c.y, r, ang - Math.PI / 2, ang + Math.PI / 2);
-    ctx.closePath();
-    ctx.fillStyle = proj.color;
-    ctx.fill();
+    const cx = proj.params.cx ?? proj.pos.x;
+    const cy = proj.params.cy ?? proj.pos.y;
+    const r = proj.params.radius ?? 100;
+    const a0 = proj.params.a0 ?? 0;
+    const a1 = proj.params.a1 ?? 0;
+    const count = 6;
+    for (let i = 0; i < count; i++) {
+      const a = a0 + ((a1 - a0) * i) / (count - 1);
+      const s = camera.worldToScreen({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+      const lead = i === count - 1;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, (lead ? 12 : 7) * camera.zoom, 0, Math.PI * 2);
+      ctx.globalAlpha = lead ? 1 : 0.45 + (0.4 * i) / count;
+      ctx.fillStyle = proj.color;
+      ctx.fill();
+    }
     ctx.globalAlpha = 1;
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = proj.color;
-    ctx.stroke();
   }
 
   /** Trait laser : un court segment lumineux dans le sens du déplacement. */

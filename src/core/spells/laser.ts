@@ -2,10 +2,10 @@ import type { Spell, ProjectileBehavior } from './spell';
 import { applyDamage } from '../combat';
 
 const DURATION = 1; // durée du faisceau (s)
-const DPS = 45; // dégâts par seconde de contact
+const DPS = 80; // dégâts par seconde de contact (relevés)
 const WIDTH = 5; // demi-largeur du rayon
 const LENGTH = 4000; // portée « illimitée »
-const COOLDOWN = 5; // long
+const COOLDOWN = 7; // long (relevé)
 const COLOR = '#ef4444';
 
 /** Sort : projette un rayon fin de portée illimitée qui blesse tant qu'il touche. */
@@ -20,9 +20,12 @@ export const laser: Spell = {
   preview: 'orb',
   icon: '<path d="M2 11h14l-3-3h3l5 4-5 4h-3l3-3H2z"/>',
   cast(world, caster) {
+    // Le lanceur est ancré pendant toute la durée du faisceau.
+    caster.frozenTime = DURATION;
     world.projectiles.push({
       id: world.nextProjectileId++,
       ownerId: caster.id,
+      // Origine ET direction figées à la zone de lancement.
       pos: { x: caster.pos.x, y: caster.pos.y },
       vel: { x: 0, y: 0 },
       radius: WIDTH,
@@ -36,7 +39,7 @@ export const laser: Spell = {
   },
 };
 
-/** Faisceau canalisé : suit le lanceur (origine + direction) et blesse le long de la ligne. */
+/** Faisceau fixe : origine et direction figées au lancement, blesse le long de la ligne. */
 export const beamBehavior: ProjectileBehavior = {
   update(world, proj, dt) {
     proj.life -= dt;
@@ -46,16 +49,12 @@ export const beamBehavior: ProjectileBehavior = {
     }
     const owner = world.players.find((p) => p.id === proj.ownerId);
     if (!owner || !owner.alive) {
-      proj.dead = true;
+      proj.dead = true; // s'arrête si le lanceur meurt
       return;
     }
 
-    proj.pos.x = owner.pos.x;
-    proj.pos.y = owner.pos.y;
-    const dx = owner.facing.x;
-    const dy = owner.facing.y;
-    proj.params.dx = dx;
-    proj.params.dy = dy;
+    const dx = proj.params.dx;
+    const dy = proj.params.dy;
     const halfW = proj.params.width;
 
     for (const p of world.players) {

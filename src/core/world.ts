@@ -24,6 +24,8 @@ export function createPlayer(
     facing: vec(1, 0),
     knockback: vec(0, 0),
     shieldTime: 0,
+    frozenTime: 0,
+    chargeTime: 0,
     grapple: null,
     color,
     isBot,

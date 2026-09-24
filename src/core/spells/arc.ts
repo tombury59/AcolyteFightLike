@@ -1,24 +1,26 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { applyDamage } from '../combat';
 
-const RADIUS = 95; // courte portée
-const DPS = 130; // sur une durée courte -> dégâts francs
-const LIFETIME = 0.25; // le balayage est bref
+const RADIUS = 100; // rayon du balayage (courte portée)
+const HIT = 34; // rayon de la zone de frappe qui balaie
+const DPS = 220; // dégâts pendant le passage du point
+const LIFETIME = 0.4; // durée du balayage
 const COOLDOWN = 2.5; // moyen
 const COLOR = '#facc15';
 
-/** Sort : balayage en demi-cercle devant l'utilisateur, courte portée. */
+/** Sort : balaie une zone en demi-cercle de gauche à droite devant l'utilisateur. */
 export const arc: Spell = {
   id: 'arc',
   name: 'Balayage',
   cooldown: COOLDOWN,
   color: COLOR,
   description:
-    'Frappe en demi-cercle devant toi à courte portée, infligeant de bons dégâts ' +
-    'à tous les ennemis proches. Idéal quand un rival te colle.',
+    'Balaie l’espace devant toi de gauche à droite en demi-cercle, infligeant ' +
+    'des dégâts aux ennemis sur le passage. Idéal quand un rival te colle.',
   preview: 'orb',
   icon: '<path d="M4 13a8 8 0 0116 0h-3a5 5 0 00-10 0z"/>',
   cast(world, caster) {
+    const fa = Math.atan2(caster.facing.y, caster.facing.x);
     world.projectiles.push({
       id: world.nextProjectileId++,
       ownerId: caster.id,
@@ -30,12 +32,12 @@ export const arc: Spell = {
       dead: false,
       behavior: 'arc',
       renderKind: 'arc',
-      params: { dps: DPS, radius: RADIUS, dx: caster.facing.x, dy: caster.facing.y },
+      params: { dps: DPS, radius: RADIUS, hit: HIT, dur: LIFETIME, fa, cx: 0, cy: 0, a0: 0, a1: 0 },
     });
   },
 };
 
-/** Balayage : suit le lanceur, blesse les ennemis dans le demi-cercle avant. */
+/** Balayage : un point de frappe glisse le long de l'arc, du côté gauche vers la droite. */
 export const arcBehavior: ProjectileBehavior = {
   update(world, proj, dt) {
     proj.life -= dt;
@@ -49,22 +51,26 @@ export const arcBehavior: ProjectileBehavior = {
       return;
     }
 
-    proj.pos.x = owner.pos.x;
-    proj.pos.y = owner.pos.y;
-    const dx = owner.facing.x;
-    const dy = owner.facing.y;
-    proj.params.dx = dx;
-    proj.params.dy = dy;
+    const cx = owner.pos.x;
+    const cy = owner.pos.y;
+    const progress = Math.min(1, Math.max(0, 1 - proj.life / proj.params.dur));
+    const a0 = proj.params.fa - Math.PI / 2;
+    const a1 = a0 + progress * Math.PI;
+    proj.params.cx = cx;
+    proj.params.cy = cy;
+    proj.params.a0 = a0;
+    proj.params.a1 = a1;
 
+    // Point de frappe courant qui balaie l'arc.
+    const px = cx + Math.cos(a1) * proj.params.radius;
+    const py = cy + Math.sin(a1) * proj.params.radius;
     for (const p of world.players) {
       if (!p.alive || p.id === proj.ownerId) continue;
-      const rx = p.pos.x - proj.pos.x;
-      const ry = p.pos.y - proj.pos.y;
-      const d = Math.hypot(rx, ry);
-      if (d > proj.params.radius + p.radius) continue;
-      // Demi-cercle avant : produit scalaire >= 0 avec la direction visée.
-      if (d > 0 && (rx * dx + ry * dy) / d < 0) continue;
-      applyDamage(p, proj.params.dps * dt);
+      const dx = p.pos.x - px;
+      const dy = p.pos.y - py;
+      if (Math.hypot(dx, dy) <= proj.params.hit + p.radius) {
+        applyDamage(p, proj.params.dps * dt);
+      }
     }
   },
 };

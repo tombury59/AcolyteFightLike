@@ -1,29 +1,33 @@
 import type { Spell } from './spell';
 import type { Player, WorldState } from '../types';
-import { dist } from '../vec';
 
-const RANGE = 300; // portée d'accroche
+const RANGE = 360; // portée d'accroche
 const DURATION = 2.5; // durée du lien (s)
 const TETHER = 150; // longueur de laisse
-const LAUNCH = 900; // force d'éjection à la fin
+const LAUNCH = 3000; // force d'éjection à la fin (très forte)
+const AIM_TOLERANCE = 42; // il faut viser la cible (distance au rayon)
 const COOLDOWN = 4; // moyen
 const COLOR = '#f472b6';
 
-/** Cible d'accroche : l'ennemi vivant le plus proche à portée, de préférence devant. */
+/**
+ * Cible d'accroche : la PREMIÈRE cible sur le rayon de visée (hitscan).
+ * Le grappin ne cible pas tout seul : il faut pointer l'ennemi.
+ */
 function acquireTarget(world: WorldState, caster: Player): Player | null {
+  const dx = caster.facing.x;
+  const dy = caster.facing.y;
   let best: Player | null = null;
-  let bestScore = Infinity;
+  let bestAlong = Infinity;
   for (const p of world.players) {
     if (!p.alive || p.id === caster.id) continue;
-    const d = dist(p.pos, caster.pos);
-    if (d > RANGE) continue;
-    // Bonus si la cible est devant (dans la direction visée).
-    const nx = (p.pos.x - caster.pos.x) / (d || 1);
-    const ny = (p.pos.y - caster.pos.y) / (d || 1);
-    const facingDot = nx * caster.facing.x + ny * caster.facing.y;
-    const score = d - facingDot * 120; // privilégie les cibles devant
-    if (score < bestScore) {
-      bestScore = score;
+    const rx = p.pos.x - caster.pos.x;
+    const ry = p.pos.y - caster.pos.y;
+    const along = rx * dx + ry * dy; // avancée le long de la visée
+    if (along <= 0 || along > RANGE) continue; // derrière ou hors de portée
+    const perp = Math.abs(rx * -dy + ry * dx); // écart au rayon
+    if (perp > p.radius + AIM_TOLERANCE) continue; // pas assez bien visé
+    if (along < bestAlong) {
+      bestAlong = along;
       best = p;
     }
   }

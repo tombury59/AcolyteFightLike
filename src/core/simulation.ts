@@ -20,6 +20,7 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
     if (!p.alive) continue;
     tickCooldowns(p, dt);
     if (p.shieldTime > 0) p.shieldTime = Math.max(0, p.shieldTime - dt);
+    if (p.frozenTime > 0) p.frozenTime = Math.max(0, p.frozenTime - dt);
 
     const input = inputs.get(p.id);
     if (input) {
@@ -28,7 +29,8 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
       const dir = normalize(toAim);
 
       // Le personnage se dirige vers le curseur, avec une zone morte anti-jitter.
-      if (input.follow && d > CONFIG.player.followStopDist) {
+      // Immobilisé (ex. pendant le laser) : pas de déplacement, mais la visée reste libre.
+      if (p.frozenTime <= 0 && input.follow && d > CONFIG.player.followStopDist) {
         p.vel.x = dir.x * p.speed;
         p.vel.y = dir.y * p.speed;
       } else {
@@ -54,8 +56,9 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
   // 2. Grappins actifs : laisse la cible attachée puis l'éjecte à la fin.
   updateGrapples(world, dt);
 
-  // 3. Collisions entre joueurs.
+  // 3. Collisions entre joueurs, puis poussée des charges (dash).
   resolvePlayerCollisions(world.players);
+  updateDashCharges(world, dt);
 
   // 4. Projectiles : chaque projectile est mis à jour par SON comportement.
   updateProjectiles(world, dt);
@@ -106,6 +109,33 @@ function updateGrapples(world: WorldState, dt: number): void {
       target.knockback.x += p.facing.x * g.launch;
       target.knockback.y += p.facing.y * g.launch;
       p.grapple = null;
+    }
+  }
+}
+
+/** Charge (dash) : un joueur en pleine ruée projette violemment les ennemis heurtés. */
+const CHARGE_PUSH = 1400;
+function updateDashCharges(world: WorldState, dt: number): void {
+  for (const p of world.players) {
+    if (p.chargeTime <= 0) continue;
+    p.chargeTime = Math.max(0, p.chargeTime - dt);
+    // Direction de la ruée = sens du recul en cours, sinon la visée.
+    let dx = p.knockback.x;
+    let dy = p.knockback.y;
+    const m = Math.hypot(dx, dy);
+    if (m > 1) {
+      dx /= m;
+      dy /= m;
+    } else {
+      dx = p.facing.x;
+      dy = p.facing.y;
+    }
+    for (const e of world.players) {
+      if (!e.alive || e.id === p.id) continue;
+      if (dist(p.pos, e.pos) <= p.radius + e.radius + 4) {
+        e.knockback.x = dx * CHARGE_PUSH;
+        e.knockback.y = dy * CHARGE_PUSH;
+      }
     }
   }
 }

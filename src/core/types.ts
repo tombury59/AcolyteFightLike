@@ -30,6 +30,10 @@ export interface Player {
   knockback: Vec2;
   /** Temps de bouclier restant en secondes (bloque les dégâts si > 0). */
   shieldTime: number;
+  /** Temps d'immobilisation restant (ex. pendant le laser) : le joueur ne se déplace pas. */
+  frozenTime: number;
+  /** Fenêtre de charge (ex. dash) durant laquelle il bouscule fort les ennemis heurtés. */
+  chargeTime: number;
   /** Grappin actif : cible liée, temps restant, longueur de laisse et force d'éjection. */
   grapple: { targetId: string; time: number; tether: number; launch: number } | null;
   color: string;

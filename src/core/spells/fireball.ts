@@ -7,7 +7,7 @@ const RADIUS = 72; // énorme
 const DPS = 10; // très peu (par seconde de contact)
 const LIFETIME = 4; // traverse presque toute l'arène
 const KNOCKBACK = 160; // = vitesse -> la cible poussée reste devant l'orbe
-const COOLDOWN = 1.5;
+const COOLDOWN = 3; // relevé
 const COLOR = '#f97316';
 
 /**
