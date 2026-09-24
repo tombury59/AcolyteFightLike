@@ -108,26 +108,12 @@ export class Spellbook {
     return overlay;
   }
 
-  /** Change de double-page avec animation de tourne-page. */
+  /** Change de double-page. */
   private go(target: number): void {
     const clamped = Math.max(0, Math.min(this.spreadCount - 1, target));
     if (clamped === this.current) return;
-    const direction = clamped > this.current ? 'next' : 'prev';
     this.current = clamped;
     this.renderSpread(clamped);
-    this.playFlip(direction);
-  }
-
-  private playFlip(direction: 'next' | 'prev'): void {
-    const leaf = document.createElement('div');
-    leaf.className = `leaf-flip leaf-flip--${direction}`;
-    this.spreadEl.appendChild(leaf);
-    // Force un reflow pour que la transition parte de l'état initial.
-    void leaf.offsetWidth;
-    leaf.classList.add('turning');
-    leaf.addEventListener('transitionend', () => leaf.remove(), { once: true });
-    // Filet de sécurité si transitionend ne se déclenche pas.
-    window.setTimeout(() => leaf.remove(), 900);
   }
 
   private renderSpread(index: number): void {
