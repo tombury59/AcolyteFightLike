@@ -543,6 +543,12 @@ body,
   opacity: 0.4;
 }
 
+.chip-disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
 .chip-small {
   padding: 5px 10px;
   font-size: 12px;

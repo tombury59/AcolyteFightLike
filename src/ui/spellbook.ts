@@ -19,6 +19,8 @@ export class Spellbook {
   private pages: Page[];
   private current = 0;
   private loadout: (string | null)[] = [];
+  private equipSlots?: HTMLElement;
+  private equipPalette?: HTMLElement;
   private raf = 0;
 
   /** `onChange` est appelé après chaque modification du loadout (pour rafraîchir l'accueil). */
@@ -135,25 +137,24 @@ export class Spellbook {
     hint.textContent =
       'Glissez un sort dans un emplacement (ou cliquez). Cliquez un emplacement pour le vider.';
 
-    const slots = document.createElement('div');
-    slots.className = 'loadout-slots';
-    this.pageEl.append(h, hint, slots);
-    this.renderSlots(slots);
+    this.equipSlots = document.createElement('div');
+    this.equipSlots.className = 'loadout-slots';
+    this.pageEl.append(h, hint, this.equipSlots);
 
     const palLabel = document.createElement('div');
     palLabel.className = 'book-subtitle';
     palLabel.textContent = 'Sorts disponibles';
-    const palette = document.createElement('div');
-    palette.className = 'palette';
-    for (const spell of Object.values(SPELLS)) {
-      const chip = this.makeChip(spell.id, true);
-      chip.addEventListener('click', () => this.addToFirstEmpty(spell.id, slots));
-      palette.appendChild(chip);
-    }
-    this.pageEl.append(palLabel, palette);
+    this.equipPalette = document.createElement('div');
+    this.equipPalette.className = 'palette';
+    this.pageEl.append(palLabel, this.equipPalette);
+
+    this.renderSlots();
+    this.renderPalette();
   }
 
-  private renderSlots(container: HTMLElement): void {
+  private renderSlots(): void {
+    const container = this.equipSlots;
+    if (!container) return;
     container.innerHTML = '';
     for (let i = 0; i < SLOT_COUNT; i++) {
       const slot = document.createElement('div');
@@ -169,7 +170,7 @@ export class Spellbook {
         slot.title = 'Cliquer pour vider';
         slot.addEventListener('click', (e) => {
           const t = e.target as HTMLElement;
-          if (t === slot || t.classList.contains('slot-key')) this.setSlot(i, null, container);
+          if (t === slot || t.classList.contains('slot-key')) this.setSlot(i, null);
         });
       } else {
         const empty = document.createElement('span');
@@ -186,9 +187,28 @@ export class Spellbook {
       slot.addEventListener('drop', (e) => {
         e.preventDefault();
         slot.classList.remove('drag-over');
-        this.handleDrop(e, i, container);
+        this.handleDrop(e, i);
       });
       container.appendChild(slot);
+    }
+  }
+
+  /** Palette : un sort déjà équipé est grisé et non déplaçable (pas de doublon). */
+  private renderPalette(): void {
+    const container = this.equipPalette;
+    if (!container) return;
+    container.innerHTML = '';
+    for (const spell of Object.values(SPELLS)) {
+      const equipped = this.loadout.includes(spell.id);
+      const chip = this.makeChip(spell.id, true);
+      if (equipped) {
+        chip.classList.add('chip-disabled');
+        chip.draggable = false;
+        chip.title = 'Déjà équipé';
+      } else {
+        chip.addEventListener('click', () => this.addToFirstEmpty(spell.id));
+      }
+      container.appendChild(chip);
     }
   }
 
@@ -217,7 +237,7 @@ export class Spellbook {
     return chip;
   }
 
-  private handleDrop(e: DragEvent, target: number, container: HTMLElement): void {
+  private handleDrop(e: DragEvent, target: number): void {
     const raw = e.dataTransfer?.getData(DND_MIME) || e.dataTransfer?.getData('text/plain');
     if (!raw) return;
     let data: { spellId: string; fromSlot: number | null };
@@ -226,29 +246,39 @@ export class Spellbook {
     } catch {
       return;
     }
+
     if (data.fromSlot !== null && data.fromSlot !== undefined) {
+      // Déplacement entre emplacements : simple échange (jamais de doublon).
       const tmp = this.loadout[target];
       this.loadout[target] = this.loadout[data.fromSlot];
       this.loadout[data.fromSlot] = tmp;
     } else {
+      // Depuis la palette : le sort est UNIQUE. S'il est déjà ailleurs, on
+      // l'y retire (échange avec le contenu actuel de la case cible).
+      const existing = this.loadout.indexOf(data.spellId);
+      if (existing >= 0 && existing !== target) {
+        this.loadout[existing] = this.loadout[target];
+      }
       this.loadout[target] = data.spellId;
     }
-    this.persist(container);
+    this.persist();
   }
 
-  private setSlot(i: number, spellId: string | null, container: HTMLElement): void {
+  private setSlot(i: number, spellId: string | null): void {
     this.loadout[i] = spellId;
-    this.persist(container);
+    this.persist();
   }
 
-  private addToFirstEmpty(spellId: string, container: HTMLElement): void {
+  private addToFirstEmpty(spellId: string): void {
+    if (this.loadout.includes(spellId)) return; // déjà équipé -> pas de doublon
     const i = this.loadout.indexOf(null);
-    if (i >= 0) this.setSlot(i, spellId, container);
+    if (i >= 0) this.setSlot(i, spellId);
   }
 
-  private persist(container: HTMLElement): void {
+  private persist(): void {
     store.setLoadout(this.loadout);
-    this.renderSlots(container);
+    this.renderSlots();
+    this.renderPalette();
     this.onChange?.();
   }
 
