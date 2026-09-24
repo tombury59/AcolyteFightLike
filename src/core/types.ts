@@ -42,15 +42,15 @@ export interface Projectile {
   pos: Vec2;
   vel: Vec2;
   radius: number;
-  /** Dégâts par seconde infligés à une cible en contact. */
-  damage: number;
-  /** Vitesse de portage transmise à la cible touchée. */
-  knockback: number;
-  /** Si vrai, traverse les cibles (ne disparaît pas à l'impact). */
-  pierce: boolean;
-  /** Durée de vie restante en secondes. */
-  life: number;
   color: string;
+  /** Durée de vie restante en secondes (gérée par le comportement). */
+  life: number;
+  /** Marqué true par son comportement quand il doit être retiré. */
+  dead: boolean;
+  /** Clé du comportement dans le registre des sorts (le moteur l'appelle sans le connaître). */
+  behavior: string;
+  /** Paramètres propres au sort, lus UNIQUEMENT par son comportement. */
+  params: Record<string, number>;
 }
 
 export interface WorldState {

@@ -1,15 +1,15 @@
 import type { Player, PlayerInput, Projectile, WorldState } from './types';
-import { normalize, sub, dist, scale, len } from './vec';
+import { normalize, sub, len, dist } from './vec';
 import { resolvePlayerCollisions } from './physics';
+import { applyDamage } from './combat';
 import { CONFIG } from './config';
-import { SPELLS } from './spells/definitions';
+import { SPELLS, PROJECTILE_BEHAVIORS } from './spells/definitions';
 
 /**
  * Fait avancer le monde d'un pas de temps fixe `dt`.
- * `inputs` associe l'id d'un joueur à son entrée pour cette frame.
  *
- * Fonction PURE vis-à-vis du DOM : aucune dépendance canvas/fenêtre ici.
- * C'est ce qui permettra d'ajouter bots puis réseau plus tard.
+ * Le moteur ne connaît AUCUN sort : il gère la physique générique (déplacement,
+ * collisions, recul, arène) et délègue les effets au registre des sorts.
  */
 export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: number): void {
   world.tick++;
@@ -26,8 +26,7 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
       const d = len(toAim);
       const dir = normalize(toAim);
 
-      // Le personnage se dirige vers le curseur, sauf s'il l'a quasiment atteint
-      // (zone morte pour éviter les micro-oscillations autour de la cible).
+      // Le personnage se dirige vers le curseur, avec une zone morte anti-jitter.
       if (input.follow && d > CONFIG.player.followStopDist) {
         p.vel.x = dir.x * p.speed;
         p.vel.y = dir.y * p.speed;
@@ -36,7 +35,6 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
         p.vel.y = 0;
       }
 
-      // La visée suit toujours le curseur (même à l'arrêt).
       if (dir.x !== 0 || dir.y !== 0) p.facing = dir;
 
       for (const spellId of input.castSpells) tryCast(world, p, spellId);
@@ -55,7 +53,7 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
   // 2. Collisions entre joueurs.
   resolvePlayerCollisions(world.players);
 
-  // 3. Projectiles : déplacement, durée de vie, impacts.
+  // 3. Projectiles : chaque projectile est mis à jour par SON comportement.
   updateProjectiles(world, dt);
 
   // 4. Rétrécissement de l'arène.
@@ -80,87 +78,24 @@ function tickCooldowns(p: Player, dt: number): void {
   }
 }
 
+/** Lance un sort par son id : gestion générique du cooldown, effet délégué au sort. */
 function tryCast(world: WorldState, caster: Player, spellId: string): void {
   const spell = SPELLS[spellId];
   if (!spell) return;
   if ((caster.cooldowns[spellId] ?? 0) > 0) return;
 
-  switch (spell.type) {
-    case 'projectile': {
-      const spawn = {
-        x: caster.pos.x + caster.facing.x * (caster.radius + spell.radius + 2),
-        y: caster.pos.y + caster.facing.y * (caster.radius + spell.radius + 2),
-      };
-      const proj: Projectile = {
-        id: world.nextProjectileId++,
-        ownerId: caster.id,
-        pos: spawn,
-        vel: scale(caster.facing, spell.speed),
-        radius: spell.radius,
-        damage: spell.damage,
-        knockback: spell.knockback,
-        pierce: spell.pierce,
-        life: spell.lifetime,
-        color: spell.color,
-      };
-      world.projectiles.push(proj);
-      break;
-    }
-    case 'dash': {
-      caster.pos.x += caster.facing.x * spell.distance;
-      caster.pos.y += caster.facing.y * spell.distance;
-      break;
-    }
-  }
-
+  spell.cast(world, caster);
   caster.cooldowns[spellId] = spell.cooldown;
 }
 
+/** Met à jour chaque projectile via son comportement, puis retire les morts. */
 function updateProjectiles(world: WorldState, dt: number): void {
   const survivors: Projectile[] = [];
   for (const proj of world.projectiles) {
-    proj.pos.x += proj.vel.x * dt;
-    proj.pos.y += proj.vel.y * dt;
-    proj.life -= dt;
-    if (proj.life <= 0) continue;
-
-    const dir = normalize(proj.vel);
-    let consumed = false;
-    for (const p of world.players) {
-      if (!p.alive || p.id === proj.ownerId) continue;
-      const surface = proj.radius + p.radius;
-      if (dist(proj.pos, p.pos) <= surface) {
-        // Dégâts par seconde tant que la cible reste au contact.
-        applyDamage(p, proj.damage * dt);
-
-        // Le joueur est REPOUSSÉ hors de l'orbe (jamais traversé) : on le
-        // replace sur la surface, du côté où il se trouve. Face à l'orbe,
-        // ce côté est l'avant -> il est poussé devant, comme un chasse-neige.
-        const toP = sub(p.pos, proj.pos);
-        const d = len(toP);
-        const n = d > 1e-3 ? { x: toP.x / d, y: toP.y / d } : dir;
-        p.pos.x = proj.pos.x + n.x * surface;
-        p.pos.y = proj.pos.y + n.y * surface;
-
-        // Élan résiduel dans le sens du tir (glisse encore un peu après le passage).
-        p.knockback.x = dir.x * proj.knockback;
-        p.knockback.y = dir.y * proj.knockback;
-
-        if (!proj.pierce) {
-          consumed = true;
-          break;
-        }
-      }
-    }
-    if (!consumed) survivors.push(proj);
+    const behavior = PROJECTILE_BEHAVIORS[proj.behavior];
+    if (behavior) behavior.update(world, proj, dt);
+    else proj.dead = true; // comportement inconnu -> on le retire
+    if (!proj.dead && proj.life > 0) survivors.push(proj);
   }
   world.projectiles = survivors;
-}
-
-function applyDamage(p: Player, amount: number): void {
-  p.health -= amount;
-  if (p.health <= 0) {
-    p.health = 0;
-    p.alive = false;
-  }
 }

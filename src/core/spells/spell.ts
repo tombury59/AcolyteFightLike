@@ -1,37 +1,24 @@
-/** Définition data-driven d'un sort. Ajouter un sort = ajouter une entrée ici. */
-export type SpellType = 'projectile' | 'dash';
+import type { Player, Projectile, WorldState } from '../types';
 
-interface BaseSpell {
+/**
+ * Un sort : ses métadonnées (pour le HUD/menu) + son effet.
+ * Le moteur invoque `cast` sans jamais connaître ce que fait le sort.
+ */
+export interface Spell {
   id: string;
   name: string;
-  type: SpellType;
   /** Temps de recharge en secondes. */
   cooldown: number;
-  /** Couleur d'affichage (HUD + projectile). */
+  /** Couleur d'affichage (HUD). */
   color: string;
+  /** Applique l'effet du sort (spawn de projectile, dash, etc.). */
+  cast(world: WorldState, caster: Player): void;
 }
 
-export interface ProjectileSpell extends BaseSpell {
-  type: 'projectile';
-  speed: number;
-  /** Dégâts PAR SECONDE tant que la cible reste dans le projectile. */
-  damage: number;
-  radius: number;
-  /** Durée de vie du projectile (s) -> détermine la portée. */
-  lifetime: number;
-  /**
-   * Vitesse à laquelle la cible est poussée (portée) dans la direction du tir.
-   * Proche de `speed` -> la cible est emportée sur toute la trajectoire.
-   */
-  knockback: number;
-  /** Si vrai, le projectile traverse les cibles au lieu de disparaître à l'impact. */
-  pierce: boolean;
+/**
+ * Comportement par frame d'un projectile, propre au sort qui l'a créé.
+ * Le moteur l'appelle via le registre, sans connaître son contenu.
+ */
+export interface ProjectileBehavior {
+  update(world: WorldState, projectile: Projectile, dt: number): void;
 }
-
-export interface DashSpell extends BaseSpell {
-  type: 'dash';
-  /** Distance de téléportation dans la direction de visée. */
-  distance: number;
-}
-
-export type Spell = ProjectileSpell | DashSpell;
