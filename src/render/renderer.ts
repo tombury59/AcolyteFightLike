@@ -84,10 +84,17 @@ export class Renderer {
     const { ctx, camera } = this;
     for (const p of world.players) {
       if (!p.grapple) continue;
-      const target = world.players.find((x) => x.id === p.grapple!.targetId);
-      if (!target) continue;
+      // Extrémité du câble : la cible accrochée, sinon le crochet en vol.
+      let end;
+      if (p.grapple.phase === 'linked') {
+        const target = world.players.find((x) => x.id === p.grapple!.targetId);
+        if (!target) continue;
+        end = target.pos;
+      } else {
+        end = p.grapple.hookPos;
+      }
       const a = camera.worldToScreen(p.pos);
-      const b = camera.worldToScreen(target.pos);
+      const b = camera.worldToScreen(end);
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
@@ -155,6 +162,7 @@ export class Renderer {
     if (proj.renderKind === 'beam') return this.drawBeam(proj);
     if (proj.renderKind === 'arc') return this.drawArcSwipe(proj);
     if (proj.renderKind === 'bolt') return this.drawBolt(proj);
+    if (proj.renderKind === 'grappleHook') return; // câble + crochet dessinés par drawGrapples
 
     const { ctx, camera } = this;
     const s = camera.worldToScreen(proj.pos);

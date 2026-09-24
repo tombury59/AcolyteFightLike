@@ -15,6 +15,15 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
   world.tick++;
   world.time += dt;
 
+  // Joueurs actuellement accrochés par un grappin : ils sont traînés (pas de
+  // déplacement propre), c'est le lien qui les balance.
+  const grabbed = new Set<string>();
+  for (const p of world.players) {
+    if (p.grapple && p.grapple.phase === 'linked' && p.grapple.targetId) {
+      grabbed.add(p.grapple.targetId);
+    }
+  }
+
   // 1. Déplacement + visée + sorts pour chaque joueur.
   for (const p of world.players) {
     if (!p.alive) continue;
@@ -24,13 +33,15 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
 
     const input = inputs.get(p.id);
     if (input) {
+      p.aimPoint = input.aim;
+      p.grappleHeld = input.castSpells.includes('grapple');
       const toAim = sub(input.aim, p.pos);
       const d = len(toAim);
       const dir = normalize(toAim);
 
       // Le personnage se dirige vers le curseur, avec une zone morte anti-jitter.
-      // Immobilisé (ex. pendant le laser) : pas de déplacement, mais la visée reste libre.
-      if (p.frozenTime <= 0 && input.follow && d > CONFIG.player.followStopDist) {
+      // Immobilisé (laser) ou accroché par un grappin : pas de déplacement propre.
+      if (p.frozenTime <= 0 && !grabbed.has(p.id) && input.follow && d > CONFIG.player.followStopDist) {
         p.vel.x = dir.x * p.speed;
         p.vel.y = dir.y * p.speed;
       } else {
@@ -42,6 +53,7 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
 
       for (const spellId of input.castSpells) tryCast(world, p, spellId);
     } else {
+      p.grappleHeld = false;
       p.vel.x = 0;
       p.vel.y = 0;
     }
@@ -49,8 +61,11 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
     // Déplacement = contrôle du joueur + recul en cours (qui s'amortit).
     p.pos.x += (p.vel.x + p.knockback.x) * dt;
     p.pos.y += (p.vel.y + p.knockback.y) * dt;
-    p.knockback.x *= CONFIG.player.knockbackDecay;
-    p.knockback.y *= CONFIG.player.knockbackDecay;
+    // Amortissement doux tant que le joueur glisse (grappin/lancer), sinon normal.
+    const decay = p.slideTime > 0 ? CONFIG.player.slideDecay : CONFIG.player.knockbackDecay;
+    p.knockback.x *= decay;
+    p.knockback.y *= decay;
+    if (p.slideTime > 0) p.slideTime = Math.max(0, p.slideTime - dt);
   }
 
   // 2. Grappins actifs : laisse la cible attachée puis l'éjecte à la fin.
@@ -79,36 +94,76 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
   }
 }
 
+// --- Physique du lien de grappin (portée de linkForce d'Acolyte Fight) ---
+const GRAPPLE_MIN_DIST = 45; // en deçà : plus de traction (comme minDistance)
+const GRAPPLE_MAX_DIST = 150; // bande de laisse ; au-delà, traction pleine
+const GRAPPLE_RADIAL_RATE = 3200; // force radiale (ressort) à pleine extension
+const GRAPPLE_SELF_FACTOR = 0.2; // le lanceur est peu tiré (il reste ancré)
+const GRAPPLE_TARGET_FACTOR = 1.0; // la cible est tirée à fond
+const GRAPPLE_SIDEWAYS_RATE = 4600; // poussée latérale (le balancement au curseur)
+
 /**
- * Grappin : tant qu'il est actif, la cible reste à portée de laisse (traînée avec
- * le grappleur). À la fin, la cible est éjectée dans la direction visée du grappleur.
+ * Lien de grappin actif (phase `linked`). Reproduit `linkForce` d'Acolyte Fight :
+ *  - un ressort radial rapproche mutuellement lanceur et cible (nul sous MIN) ;
+ *  - une poussée latérale, dirigée par le curseur du lanceur, fait tournoyer la
+ *    cible autour de lui (pendule).
+ * Aucune éjection scriptée : quand le bouton est relâché (ou au bout du temps),
+ * le lien se coupe et l'élan tangentiel accumulé projette la cible.
+ * (La phase `flying` du crochet est gérée par le comportement `grappleHook`.)
  */
 function updateGrapples(world: WorldState, dt: number): void {
   for (const p of world.players) {
     const g = p.grapple;
-    if (!g) continue;
+    if (!g || g.phase !== 'linked') continue;
+
+    // Bouton relâché ou lanceur mort -> on coupe : l'élan projette la cible.
+    if (!p.alive || !p.grappleHeld) {
+      p.grapple = null;
+      continue;
+    }
     const target = world.players.find((x) => x.id === g.targetId);
-    if (!p.alive || !target || !target.alive) {
+    if (!target || !target.alive) {
+      p.grapple = null;
+      continue;
+    }
+    g.time -= dt;
+    if (g.time <= 0) {
       p.grapple = null;
       continue;
     }
 
-    g.time -= dt;
+    // La victime glisse : elle conserve son élan (amortissement doux).
+    target.slideTime = 0.6;
 
-    // Laisse : si la cible dépasse la longueur, on la ramène à portée.
-    const dx = target.pos.x - p.pos.x;
-    const dy = target.pos.y - p.pos.y;
-    const d = Math.hypot(dx, dy) || 1;
-    if (d > g.tether) {
-      target.pos.x = p.pos.x + (dx / d) * g.tether;
-      target.pos.y = p.pos.y + (dy / d) * g.tether;
+    const ox = target.pos.x - p.pos.x;
+    const oy = target.pos.y - p.pos.y;
+    const d = Math.hypot(ox, oy) || 1;
+    const nx = ox / d;
+    const ny = oy / d;
+
+    // Ressort radial : nul sous MIN, croît linéairement au-delà.
+    const f =
+      (GRAPPLE_RADIAL_RATE * Math.max(0, d - GRAPPLE_MIN_DIST)) /
+      (GRAPPLE_MAX_DIST - GRAPPLE_MIN_DIST) *
+      dt;
+    if (f > 0) {
+      p.knockback.x += nx * GRAPPLE_SELF_FACTOR * f;
+      p.knockback.y += ny * GRAPPLE_SELF_FACTOR * f;
+      target.knockback.x -= nx * GRAPPLE_TARGET_FACTOR * f;
+      target.knockback.y -= ny * GRAPPLE_TARGET_FACTOR * f;
     }
 
-    // Fin du grappin : on projette la cible dans la direction visée du grappleur.
-    if (g.time <= 0) {
-      target.knockback.x += p.facing.x * g.launch;
-      target.knockback.y += p.facing.y * g.launch;
-      p.grapple = null;
+    // Poussée latérale vers le curseur -> le balancement.
+    const rx = ny;
+    const ry = -nx; // perpendiculaire au lien
+    const cx = p.aimPoint.x - target.pos.x;
+    const cy = p.aimPoint.y - target.pos.y;
+    const cl = Math.hypot(cx, cy);
+    if (cl > 1) {
+      const mag = (rx * cx + ry * cy) / cl; // cos de l'angle, dans [-1, 1]
+      const s = GRAPPLE_SIDEWAYS_RATE * mag * dt;
+      target.knockback.x += rx * s;
+      target.knockback.y += ry * s;
     }
   }
 }

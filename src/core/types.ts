@@ -34,8 +34,20 @@ export interface Player {
   frozenTime: number;
   /** Fenêtre de charge (ex. dash) durant laquelle il bouscule fort les ennemis heurtés. */
   chargeTime: number;
-  /** Grappin actif : cible liée, temps restant, longueur de laisse et force d'éjection. */
-  grapple: { targetId: string; time: number; tether: number; launch: number } | null;
+  /**
+   * Grappin actif (sort maintenu). `flying` = le crochet vole vers sa cible ;
+   * `linked` = un ennemi est accroché et balancé tant que le bouton est tenu.
+   * `hookPos` sert au rendu du câble pendant le vol du crochet.
+   */
+  grapple:
+    | { phase: 'flying' | 'linked'; targetId: string | null; time: number; hookPos: Vec2 }
+    | null;
+  /** Point visé (monde) cette frame : sert à faire tournoyer la cible du grappin. */
+  aimPoint: Vec2;
+  /** Fenêtre pendant laquelle le recul s'amortit doucement (glissade / lancer de grappin). */
+  slideTime: number;
+  /** Vrai si la touche du grappin est maintenue cette frame (sinon le lien se coupe). */
+  grappleHeld: boolean;
   color: string;
   isBot: boolean;
   /** Emplacements de sorts (longueur fixe, `null` = vide). L'index = la touche. */

@@ -3,7 +3,7 @@ import { fireball, fireballOrb } from './fireball';
 import { dash } from './dash';
 import { teleport } from './teleport';
 import { shield } from './shield';
-import { grapple } from './grapple';
+import { grapple, grappleHook } from './grapple';
 import { laser, beamBehavior } from './laser';
 import { arc, arcBehavior } from './arc';
 import { bolt, boltBehavior } from './bolt';
@@ -29,6 +29,7 @@ export const PROJECTILE_BEHAVIORS: Record<string, ProjectileBehavior> = {
   beam: beamBehavior,
   arc: arcBehavior,
   bolt: boltBehavior,
+  grappleHook,
 };
 
 /** Sorts équipés par défaut, dans l'ordre des emplacements. */

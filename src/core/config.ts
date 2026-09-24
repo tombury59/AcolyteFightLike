@@ -26,5 +26,7 @@ export const CONFIG = {
     followStopDist: 8,
     /** Amortissement du recul par pas de simulation (0 = instantané, 1 = jamais). */
     knockbackDecay: 0.9,
+    /** Amortissement doux quand le joueur glisse (grappin/lancer) : conserve l'élan. */
+    slideDecay: 0.985,
   },
 } as const;
