@@ -57,12 +57,23 @@ export class Spellbook {
     const book = document.createElement('div');
     book.className = 'book';
 
+    const spread = document.createElement('div');
+    spread.className = 'book-spread';
+
+    // Page gauche = sommaire (onglets).
+    const leftLeaf = document.createElement('div');
+    leftLeaf.className = 'book-leaf book-leaf--left';
     this.tabsEl = document.createElement('div');
     this.tabsEl.className = 'book-tabs';
+    leftLeaf.appendChild(this.tabsEl);
 
-    const right = document.createElement('div');
-    right.className = 'book-right';
+    // Reliure centrale (tissu rouge).
+    const spine = document.createElement('div');
+    spine.className = 'book-spine';
 
+    // Page droite = contenu + navigation.
+    const rightLeaf = document.createElement('div');
+    rightLeaf.className = 'book-leaf book-leaf--right';
     this.pageEl = document.createElement('div');
     this.pageEl.className = 'book-page';
 
@@ -79,9 +90,10 @@ export class Spellbook {
     close.textContent = 'Fermer';
     close.addEventListener('click', () => this.close());
     nav.append(prev, next, close);
+    rightLeaf.append(this.pageEl, nav);
 
-    right.append(this.pageEl, nav);
-    book.append(this.tabsEl, right);
+    spread.append(leftLeaf, spine, rightLeaf);
+    book.appendChild(spread);
     overlay.append(scrim, book);
     return overlay;
   }

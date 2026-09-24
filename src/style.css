@@ -298,74 +298,134 @@ body,
   backdrop-filter: blur(2px);
 }
 
+/* Cadre en bois du livre. */
 .book {
   position: relative;
-  display: flex;
-  width: min(860px, 94vw);
-  height: min(560px, 88vh);
-  background: linear-gradient(160deg, #1a2130, #10151f);
-  border: 1px solid #2b3648;
-  border-radius: 14px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
-  overflow: hidden;
-  transform: translateY(8px) scale(0.98);
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  width: min(940px, 96vw);
+  height: min(600px, 90vh);
+  padding: 20px;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(87deg, rgba(0, 0, 0, 0.14) 0 2px, rgba(255, 255, 255, 0.03) 2px 6px),
+    linear-gradient(155deg, #7a552f 0%, #5c3c1e 55%, #422a12 100%);
+  box-shadow:
+    0 40px 90px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 2px rgba(0, 0, 0, 0.3),
+    inset 0 3px 8px rgba(255, 255, 255, 0.1);
+  transform: translateY(10px) scale(0.97);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .book-overlay.open .book {
   transform: translateY(0) scale(1);
 }
 
-/* Reliure centrale. */
-.book::after {
-  content: '';
-  position: absolute;
-  left: 240px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: linear-gradient(#0000, #2b3648 20%, #2b3648 80%, #0000);
+/* Ensemble des deux pages posées sur le bois. */
+.book-spread {
+  position: relative;
+  display: flex;
+  height: 100%;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
 }
 
-.book-tabs {
-  flex: 0 0 240px;
+/* Tranche dorée en bas (pages empilées). */
+.book-spread::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 18px;
+  background: repeating-linear-gradient(
+    0deg,
+    #a9822f 0 1px,
+    #e9cd7c 1px 2px,
+    #c9a24a 2px 3px
+  );
+  border-radius: 0 0 30% 30% / 0 0 100% 100%;
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.5);
+  z-index: 3;
+}
+
+/* Une page de parchemin. */
+.book-leaf {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 22px 16px;
-  background: rgba(0, 0, 0, 0.18);
+  padding: 26px 26px 42px;
+  overflow: hidden;
+  color: #3f2c17;
+  background:
+    radial-gradient(60% 45% at 22% 18%, rgba(255, 255, 255, 0.35), transparent 60%),
+    radial-gradient(120% 100% at 50% -5%, #f5ecd4 0%, #ecdcb6 62%, #ddc898 100%);
+}
+
+.book-leaf--left {
+  border-radius: 8px 3px 3px 8px;
+  box-shadow: inset -22px 0 34px -22px rgba(80, 52, 24, 0.75);
+}
+
+.book-leaf--right {
+  border-radius: 3px 8px 8px 3px;
+  box-shadow: inset 22px 0 34px -22px rgba(80, 52, 24, 0.75);
+}
+
+/* Reliure centrale en tissu rouge. */
+.book-spine {
+  flex: 0 0 26px;
+  position: relative;
+  z-index: 2;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.25) 0 2px, rgba(255, 255, 255, 0.05) 2px 5px),
+    linear-gradient(90deg, #4a1119, #7a1f2b 50%, #4a1119);
+  box-shadow:
+    inset 7px 0 10px -6px rgba(0, 0, 0, 0.7),
+    inset -7px 0 10px -6px rgba(0, 0, 0, 0.7);
+}
+
+/* Sommaire (page gauche). */
+.book-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   overflow-y: auto;
 }
 
 .book-brand {
-  font-size: 20px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
   font-weight: 800;
-  color: #f8fafc;
-  letter-spacing: 0.04em;
-  margin-bottom: 10px;
+  color: #5a3a1c;
+  letter-spacing: 0.03em;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 2px solid rgba(90, 58, 28, 0.35);
 }
 
 .book-tab {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  color: #cbd5e1;
+  padding: 9px 10px;
+  color: #5a4326;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 15px;
   text-align: left;
   cursor: pointer;
 }
 
 .book-tab:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(90, 58, 28, 0.1);
 }
 
 .book-tab.active {
-  background: rgba(56, 189, 248, 0.12);
-  color: #f8fafc;
+  background: rgba(122, 31, 43, 0.12);
+  color: #3f2c17;
+  font-weight: 700;
 }
 
 .tab-dot {
@@ -373,25 +433,21 @@ body,
   height: 11px;
   border-radius: 50%;
   flex: 0 0 auto;
+  box-shadow: 0 0 6px currentColor;
 }
 
-.book-right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
+/* Contenu (page droite). */
 .book-page {
   flex: 1;
-  padding: 26px 28px;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .book-title {
+  font-family: Georgia, 'Times New Roman', serif;
   font-size: 26px;
   font-weight: 800;
-  color: #f8fafc;
+  color: #3f2c17;
   margin-bottom: 12px;
 }
 
@@ -401,14 +457,14 @@ body,
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: #8a6a3e;
 }
 
 .book-hint,
 .book-desc {
-  color: #94a3b8;
+  color: #6b5232;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   margin-bottom: 14px;
 }
 
@@ -416,8 +472,8 @@ body,
   width: 100%;
   max-width: 520px;
   height: auto;
-  border-radius: 10px;
-  border: 1px solid #2b3648;
+  border-radius: 8px;
+  border: 2px solid rgba(90, 58, 28, 0.4);
   margin-bottom: 14px;
   display: block;
 }
@@ -425,51 +481,64 @@ body,
 .book-stats {
   display: flex;
   gap: 16px;
-  color: #cbd5e1;
+  color: #6b5232;
   font-size: 14px;
 }
 
 .book-stats b {
-  color: #f8fafc;
+  color: #3f2c17;
 }
 
 .book-nav {
   display: flex;
   gap: 10px;
-  padding: 14px 28px;
-  border-top: 1px solid #232c3b;
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(90, 58, 28, 0.3);
 }
 
 .book-nav button {
-  padding: 9px 16px;
-  color: #e5e7eb;
-  background: #1f2937;
-  border: 1px solid #334155;
-  border-radius: 8px;
+  padding: 8px 14px;
+  color: #4a3319;
+  background: rgba(255, 250, 235, 0.5);
+  border: 1px solid rgba(90, 58, 28, 0.45);
+  border-radius: 7px;
   cursor: pointer;
   font-size: 14px;
 }
 
 .book-nav button:hover {
-  background: #334155;
+  background: rgba(255, 250, 235, 0.85);
 }
 
 .book-close {
   margin-left: auto;
 }
 
-@media (max-width: 640px) {
-  .book {
+/* En vue étroite : on empile les deux pages. */
+@media (max-width: 720px) {
+  .book-spread {
     flex-direction: column;
-    height: min(88vh, 620px);
   }
-  .book::after {
-    display: none;
+  .book-spine {
+    flex: 0 0 10px;
+  }
+  .book-leaf {
+    padding: 18px 18px 20px;
+  }
+  .book-leaf--left {
+    border-radius: 8px 8px 3px 3px;
+    box-shadow: inset 0 -22px 30px -22px rgba(80, 52, 24, 0.7);
+    max-height: 42%;
+  }
+  .book-leaf--right {
+    border-radius: 3px 3px 8px 8px;
+    box-shadow: inset 0 22px 30px -22px rgba(80, 52, 24, 0.7);
   }
   .book-tabs {
-    flex: 0 0 auto;
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
   }
   .book-brand {
     width: 100%;
@@ -489,16 +558,16 @@ body,
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0b0e14;
-  border: 1px dashed #374151;
+  background: rgba(120, 88, 44, 0.08);
+  border: 1px dashed rgba(90, 58, 28, 0.5);
   border-radius: 10px;
   cursor: pointer;
 }
 
 .slot.drag-over {
-  border-color: #38bdf8;
+  border-color: #7a1f2b;
   border-style: solid;
-  background: #0e1626;
+  background: rgba(122, 31, 43, 0.1);
 }
 
 .slot-key {
@@ -506,12 +575,12 @@ body,
   top: 6px;
   left: 8px;
   font-size: 11px;
-  color: #475569;
+  color: #8a6a3e;
   font-weight: 700;
 }
 
 .slot-empty {
-  color: #475569;
+  color: #9c855f;
   font-size: 13px;
 }
 
@@ -526,10 +595,10 @@ body,
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: #0e1626;
-  border: 1px solid var(--chip-color, #334155);
+  background: rgba(255, 250, 235, 0.6);
+  border: 1px solid var(--chip-color, #a5895c);
   border-radius: 999px;
-  color: #e5e7eb;
+  color: #3f2c17;
   font-size: 14px;
   cursor: grab;
   user-select: none;
