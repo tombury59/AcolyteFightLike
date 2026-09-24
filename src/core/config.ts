@@ -18,11 +18,13 @@ export const CONFIG = {
 
   player: {
     radius: 18,
-    speed: 260,
+    speed: 220,
     maxHealth: 100,
     /** Dégâts par seconde infligés hors de l'arène. */
     outOfBoundsDps: 20,
     /** Distance au curseur en deçà de laquelle le personnage s'arrête (anti-jitter). */
     followStopDist: 8,
+    /** Amortissement du recul par pas de simulation (0 = instantané, 1 = jamais). */
+    knockbackDecay: 0.9,
   },
 } as const;

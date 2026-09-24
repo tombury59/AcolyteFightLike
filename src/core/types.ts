@@ -24,6 +24,8 @@ export interface Player {
   alive: boolean;
   /** Direction de visée normalisée (pour dessiner l'orientation). */
   facing: Vec2;
+  /** Vitesse de recul en cours (s'ajoute au déplacement, s'amortit avec le temps). */
+  knockback: Vec2;
   color: string;
   isBot: boolean;
   /** Sorts équipés (ids), affichés dans le HUD. */
@@ -39,6 +41,8 @@ export interface Projectile {
   vel: Vec2;
   radius: number;
   damage: number;
+  /** Force de recul transmise à la cible touchée. */
+  knockback: number;
   /** Durée de vie restante en secondes. */
   life: number;
   color: string;

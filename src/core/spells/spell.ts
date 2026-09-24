@@ -18,6 +18,8 @@ export interface ProjectileSpell extends BaseSpell {
   radius: number;
   /** Durée de vie du projectile (s) -> détermine la portée. */
   lifetime: number;
+  /** Force de recul appliquée à la cible touchée (unités/s de vitesse initiale). */
+  knockback: number;
 }
 
 export interface DashSpell extends BaseSpell {

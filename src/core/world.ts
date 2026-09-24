@@ -13,6 +13,7 @@ export function createPlayer(id: string, x: number, y: number, color: string, is
     health: CONFIG.player.maxHealth,
     alive: true,
     facing: vec(1, 0),
+    knockback: vec(0, 0),
     color,
     isBot,
     spellSet: [...DEFAULT_SPELL_SET],

@@ -44,8 +44,12 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
       p.vel.x = 0;
       p.vel.y = 0;
     }
-    p.pos.x += p.vel.x * dt;
-    p.pos.y += p.vel.y * dt;
+
+    // Déplacement = contrôle du joueur + recul en cours (qui s'amortit).
+    p.pos.x += (p.vel.x + p.knockback.x) * dt;
+    p.pos.y += (p.vel.y + p.knockback.y) * dt;
+    p.knockback.x *= CONFIG.player.knockbackDecay;
+    p.knockback.y *= CONFIG.player.knockbackDecay;
   }
 
   // 2. Collisions entre joueurs.
@@ -94,6 +98,7 @@ function tryCast(world: WorldState, caster: Player, spellId: string): void {
         vel: scale(caster.facing, spell.speed),
         radius: spell.radius,
         damage: spell.damage,
+        knockback: spell.knockback,
         life: spell.lifetime,
         color: spell.color,
       };
@@ -123,6 +128,10 @@ function updateProjectiles(world: WorldState, dt: number): void {
       if (!p.alive || p.id === proj.ownerId) continue;
       if (dist(proj.pos, p.pos) <= proj.radius + p.radius) {
         applyDamage(p, proj.damage);
+        // Recul : la cible est projetée dans la direction du tir.
+        const kb = normalize(proj.vel);
+        p.knockback.x += kb.x * proj.knockback;
+        p.knockback.y += kb.y * proj.knockback;
         consumed = true;
         break;
       }
