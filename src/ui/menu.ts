@@ -9,6 +9,7 @@ import { SPELLS } from '../core/spells/definitions';
 export class Menu {
   private root: HTMLDivElement;
   private bindingLabels = new Map<string, HTMLSpanElement>();
+  private statsEl!: HTMLDivElement;
   /** Nettoyage d'une capture de touche en cours (rebind). */
   private cancelCapture: (() => void) | null = null;
 
@@ -33,12 +34,23 @@ export class Menu {
     play.addEventListener('click', () => this.onPlay());
     panel.appendChild(play);
 
+    this.statsEl = document.createElement('div');
+    this.statsEl.className = 'menu-stats';
+    panel.appendChild(this.statsEl);
+
     this.root.appendChild(panel);
     document.body.appendChild(this.root);
   }
 
   show(): void {
+    this.refreshStats();
     this.root.classList.remove('hidden');
+  }
+
+  private refreshStats(): void {
+    const s = store.getStats();
+    this.statsEl.textContent =
+      `Parties ${s.played} · Victoires ${s.won} · Record ${Math.floor(s.bestTime)}s`;
   }
 
   hide(): void {

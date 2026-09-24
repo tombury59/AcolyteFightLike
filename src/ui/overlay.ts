@@ -9,6 +9,7 @@ export class Overlay {
   private timerEl: HTMLDivElement;
   private gameOverEl: HTMLDivElement;
   private titleEl: HTMLDivElement;
+  private detailEl: HTMLDivElement;
 
   constructor(
     private onReplay: () => void,
@@ -23,6 +24,9 @@ export class Overlay {
 
     this.titleEl = document.createElement('div');
     this.titleEl.className = 'gameover-title';
+
+    this.detailEl = document.createElement('div');
+    this.detailEl.className = 'gameover-detail';
 
     const buttons = document.createElement('div');
     buttons.className = 'gameover-buttons';
@@ -40,6 +44,7 @@ export class Overlay {
     buttons.appendChild(menu);
 
     this.gameOverEl.appendChild(this.titleEl);
+    this.gameOverEl.appendChild(this.detailEl);
     this.gameOverEl.appendChild(buttons);
     document.body.appendChild(this.gameOverEl);
   }
@@ -53,10 +58,11 @@ export class Overlay {
     this.timerEl.textContent = '';
   }
 
-  showGameOver(result: MatchResult): void {
+  showGameOver(result: MatchResult, detail = ''): void {
     this.titleEl.textContent = result === 'win' ? 'Victoire !' : 'Défaite';
     this.titleEl.classList.toggle('win', result === 'win');
     this.titleEl.classList.toggle('lose', result === 'lose');
+    this.detailEl.textContent = detail;
     this.gameOverEl.classList.remove('hidden');
   }
 

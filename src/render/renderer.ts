@@ -2,6 +2,7 @@ import type { Player, Projectile, WorldState } from '../core/types';
 import { CONFIG } from '../core/config';
 import { SPELLS } from '../core/spells/definitions';
 import { Camera } from './camera';
+import type { Particle } from './effects';
 
 const LOCAL_PLAYER_ID = 'you';
 
@@ -28,7 +29,7 @@ export class Renderer {
     this.camera.zoom = Math.min(w, h) / diameter;
   }
 
-  render(world: WorldState): void {
+  render(world: WorldState, particles: Particle[] = []): void {
     const { ctx, camera } = this;
 
     ctx.fillStyle = '#0b0e14';
@@ -37,7 +38,21 @@ export class Renderer {
     this.drawArena(world);
     for (const proj of world.projectiles) this.drawProjectile(proj);
     for (const p of world.players) this.drawPlayer(p);
+    this.drawParticles(particles);
     this.drawHud(world);
+  }
+
+  private drawParticles(particles: Particle[]): void {
+    const { ctx, camera } = this;
+    for (const p of particles) {
+      const s = camera.worldToScreen({ x: p.x, y: p.y });
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, p.radius * camera.zoom, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   }
 
   private drawArena(world: WorldState): void {

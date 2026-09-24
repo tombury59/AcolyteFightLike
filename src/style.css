@@ -93,6 +93,12 @@ body,
   background: #7dd3fc;
 }
 
+.gameover-detail {
+  margin-top: -8px;
+  color: #9ca3af;
+  font-size: 16px;
+}
+
 .gameover-buttons {
   display: flex;
   gap: 12px;
@@ -201,4 +207,11 @@ body,
 
 .menu-play:hover {
   background: #86efac;
+}
+
+.menu-stats {
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }

@@ -8,6 +8,8 @@ import { computeBotInput } from './ai/bot';
 import { Overlay, type MatchResult } from './ui/overlay';
 import { Menu } from './ui/menu';
 import { store } from './storage/localStore';
+import { ParticleSystem } from './render/effects';
+import { sfx } from './audio/sfx';
 
 const LOCAL_PLAYER_ID = 'you';
 
@@ -23,10 +25,14 @@ export class Game {
   private input: InputManager;
   private overlay: Overlay;
   private menu: Menu;
+  private effects = new ParticleSystem();
   private accumulator = 0;
   private lastTime = 0;
   private running = false;
   private status: MatchStatus = 'menu';
+  /** Suivi d'état pour détecter morts et apparitions de projectiles (effets). */
+  private prevAlive = new Set<string>();
+  private knownProjectiles = new Set<number>();
 
   constructor(canvas: HTMLCanvasElement) {
     this.world = createWorld(store.getPlayerName());
@@ -58,11 +64,15 @@ export class Game {
 
   /** Démarre (ou relance) une manche avec les paramètres courants. */
   private startMatch(): void {
+    sfx.resume(); // geste utilisateur -> autorise l'audio
     this.input.reloadBindings();
     this.world = createWorld(store.getPlayerName());
     this.status = 'playing';
     this.accumulator = 0;
     this.lastTime = performance.now();
+    this.effects.particles = [];
+    this.prevAlive = new Set(this.world.players.filter((p) => p.alive).map((p) => p.id));
+    this.knownProjectiles.clear();
     this.menu.hide();
     this.overlay.hideGameOver();
   }
@@ -87,12 +97,41 @@ export class Game {
         this.accumulator -= CONFIG.fixedDt;
         if (this.checkMatchEnd()) break;
       }
+      this.detectEvents();
       this.updateStatusUi();
     }
 
-    this.renderer.render(this.world);
+    // Les particules continuent d'animer même sur l'écran de fin.
+    this.effects.update(elapsed);
+    this.renderer.render(this.world, this.effects.particles);
     requestAnimationFrame(this.frame);
   };
+
+  /** Détecte morts et nouveaux projectiles pour déclencher effets et sons. */
+  private detectEvents(): void {
+    // Morts -> gerbe de particules + son.
+    const aliveNow = new Set<string>();
+    for (const p of this.world.players) {
+      if (p.alive) {
+        aliveNow.add(p.id);
+      } else if (this.prevAlive.has(p.id)) {
+        this.effects.burst(p.pos, p.color);
+        sfx.play('death');
+      }
+    }
+    this.prevAlive = aliveNow;
+
+    // Nouveaux projectiles -> bouffée (+ son pour ceux du joueur local).
+    const ids = new Set<number>();
+    for (const proj of this.world.projectiles) {
+      ids.add(proj.id);
+      if (!this.knownProjectiles.has(proj.id)) {
+        this.effects.puff(proj.pos, proj.color);
+        if (proj.ownerId === LOCAL_PLAYER_ID) sfx.play('cast');
+      }
+    }
+    this.knownProjectiles = ids;
+  }
 
   private simulateStep(): void {
     const inputs = new Map<string, PlayerInput>();
@@ -116,7 +155,14 @@ export class Game {
 
     if (result) {
       this.status = 'over';
-      this.overlay.showGameOver(result);
+      const survived = Math.floor(this.world.time);
+      const stats = store.recordMatch(result === 'win', this.world.time);
+      const detail =
+        result === 'win'
+          ? `Survécu ${survived}s · Victoires ${stats.won}/${stats.played}`
+          : `Survécu ${survived}s`;
+      this.overlay.showGameOver(result, detail);
+      sfx.play(result === 'win' ? 'win' : 'lose');
       return true;
     }
     return false;
