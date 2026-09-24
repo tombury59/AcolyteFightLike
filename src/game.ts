@@ -4,6 +4,7 @@ import { step } from './core/simulation';
 import { CONFIG } from './core/config';
 import { Renderer } from './render/renderer';
 import { InputManager } from './input/inputManager';
+import { computeBotInput } from './ai/bot';
 
 const LOCAL_PLAYER_ID = 'you';
 
@@ -51,6 +52,9 @@ export class Game {
     while (this.accumulator >= CONFIG.fixedDt) {
       const inputs = new Map<string, PlayerInput>();
       inputs.set(LOCAL_PLAYER_ID, this.input.getInput(this.renderer.camera));
+      for (const p of this.world.players) {
+        if (p.isBot && p.alive) inputs.set(p.id, computeBotInput(this.world, p));
+      }
       step(this.world, inputs, CONFIG.fixedDt);
       this.accumulator -= CONFIG.fixedDt;
     }

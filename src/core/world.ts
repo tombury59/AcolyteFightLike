@@ -20,13 +20,25 @@ export function createPlayer(id: string, x: number, y: number, color: string, is
   };
 }
 
-/** Crée un monde neuf. En phase 1-3 : un seul joueur au centre. */
+const BOT_COLORS = ['#f87171', '#c084fc', '#fbbf24'];
+
+/** Crée un monde neuf : le joueur au centre + des bots répartis en cercle. */
 export function createWorld(): WorldState {
   const center = vec(0, 0);
+  const players = [createPlayer('you', center.x, center.y, '#4ade80', false)];
+
+  const spawnRadius = 320;
+  BOT_COLORS.forEach((color, i) => {
+    const angle = (i / BOT_COLORS.length) * Math.PI * 2;
+    const x = center.x + Math.cos(angle) * spawnRadius;
+    const y = center.y + Math.sin(angle) * spawnRadius;
+    players.push(createPlayer(`bot${i}`, x, y, color, true));
+  });
+
   return {
     tick: 0,
     time: 0,
-    players: [createPlayer('you', center.x, center.y, '#4ade80', false)],
+    players,
     projectiles: [],
     nextProjectileId: 1,
     arenaCenter: center,
