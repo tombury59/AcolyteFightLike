@@ -1,12 +1,12 @@
 import type { Spell, ProjectileBehavior } from './spell';
-import { fireball, fireballOrb } from './fireball';
+import { fireball, projectileHit } from './fireball';
 import { dash } from './dash';
 import { teleport } from './teleport';
 import { shield } from './shield';
 import { grapple, grappleHook } from './grapple';
 import { laser, beamBehavior } from './laser';
-import { arc, arcBehavior } from './arc';
-import { bolt, boltBehavior } from './bolt';
+import { arc } from './arc';
+import { bolt, repulsor } from './bolt';
 
 /**
  * Registre des sorts. Ajouter un sort = créer son fichier puis l'enregistrer ICI.
@@ -25,10 +25,9 @@ export const SPELLS: Record<string, Spell> = {
 
 /** Registre des comportements de projectiles, indexés par leur clé `behavior`. */
 export const PROJECTILE_BEHAVIORS: Record<string, ProjectileBehavior> = {
-  fireballOrb,
+  projectileHit,
+  repulsor,
   beam: beamBehavior,
-  arc: arcBehavior,
-  bolt: boltBehavior,
   grappleHook,
 };
 

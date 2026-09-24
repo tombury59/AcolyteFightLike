@@ -160,7 +160,6 @@ export class Renderer {
 
   private drawProjectile(proj: Projectile): void {
     if (proj.renderKind === 'beam') return this.drawBeam(proj);
-    if (proj.renderKind === 'arc') return this.drawArcSwipe(proj);
     if (proj.renderKind === 'bolt') return this.drawBolt(proj);
     if (proj.renderKind === 'grappleHook') return; // câble + crochet dessinés par drawGrapples
 
@@ -217,27 +216,6 @@ export class Renderer {
   }
 
   /** Balayage : une série de points le long de l'arc déjà parcouru (le dernier en tête). */
-  private drawArcSwipe(proj: Projectile): void {
-    const { ctx, camera } = this;
-    const cx = proj.params.cx ?? proj.pos.x;
-    const cy = proj.params.cy ?? proj.pos.y;
-    const r = proj.params.radius ?? 100;
-    const a0 = proj.params.a0 ?? 0;
-    const a1 = proj.params.a1 ?? 0;
-    const count = 6;
-    for (let i = 0; i < count; i++) {
-      const a = a0 + ((a1 - a0) * i) / (count - 1);
-      const s = camera.worldToScreen({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
-      const lead = i === count - 1;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, (lead ? 12 : 7) * camera.zoom, 0, Math.PI * 2);
-      ctx.globalAlpha = lead ? 1 : 0.45 + (0.4 * i) / count;
-      ctx.fillStyle = proj.color;
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  }
-
   /** Trait laser : un court segment lumineux dans le sens du déplacement. */
   private drawBolt(proj: Projectile): void {
     const { ctx, camera } = this;

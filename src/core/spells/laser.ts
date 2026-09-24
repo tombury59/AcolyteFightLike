@@ -1,45 +1,60 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { applyDamage } from '../combat';
 
-const DURATION = 1; // durée du faisceau (s)
-const DPS = 80; // dégâts par seconde de contact (relevés)
+// Fidèle à « Acolyte Beam » (kamehameha) : courte charge, puis un faisceau
+// continu très puissant. Le lanceur reste immobile pendant toute la durée
+// (dans le jeu de base, bouger annule le faisceau).
+const CHARGE = 0.3; // charge avant émission (s)
+const DURATION = 1.6; // durée du faisceau (s)
+const DPS = 60; // dégâts par seconde de contact (peut nettoyer une barre entière)
 const WIDTH = 5; // demi-largeur du rayon
 const LENGTH = 4000; // portée « illimitée »
-const COOLDOWN = 7; // long (relevé)
-const COLOR = '#ef4444';
+const COOLDOWN = 6;
+const COLOR = '#44ddff';
 
-/** Sort : projette un rayon fin de portée illimitée qui blesse tant qu'il touche. */
+/** Sort : déchaîne un faisceau continu dévastateur ; immobilise le lanceur. */
 export const laser: Spell = {
   id: 'laser',
-  name: 'Laser',
+  name: 'Faisceau',
   cooldown: COOLDOWN,
   color: COLOR,
   description:
-    'Projette un rayon fin de portée illimitée. Inflige des dégâts en continu ' +
-    'à tout ennemi qu’il traverse, d’autant plus qu’il reste dans le faisceau.',
+    'Déchaîne un faisceau si puissant qu’il peut anéantir un ennemi à pleine vie ' +
+    'en quelques secondes. Tu restes immobile le temps de le canaliser.',
   preview: 'orb',
   icon: '<path d="M2 11h14l-3-3h3l5 4-5 4h-3l3-3H2z"/>',
   cast(world, caster) {
-    // Le lanceur est ancré pendant toute la durée du faisceau.
-    caster.frozenTime = DURATION;
+    // Le lanceur est ancré pendant la charge ET l'émission.
+    caster.frozenTime = CHARGE + DURATION;
     world.projectiles.push({
       id: world.nextProjectileId++,
       ownerId: caster.id,
-      // Origine ET direction figées à la zone de lancement.
+      // Origine ET direction figées à l'instant du lancement.
       pos: { x: caster.pos.x, y: caster.pos.y },
       vel: { x: 0, y: 0 },
       radius: WIDTH,
       color: COLOR,
-      life: DURATION,
+      life: CHARGE + DURATION,
       dead: false,
       behavior: 'beam',
       renderKind: 'beam',
-      params: { dps: DPS, width: WIDTH, length: LENGTH, dx: caster.facing.x, dy: caster.facing.y },
+      params: {
+        dps: DPS,
+        width: WIDTH,
+        length: LENGTH,
+        dx: caster.facing.x,
+        dy: caster.facing.y,
+        dur: DURATION,
+      },
     });
   },
 };
 
-/** Faisceau fixe : origine et direction figées au lancement, blesse le long de la ligne. */
+/**
+ * Faisceau : pendant la charge (première `params.charge` seconde) il ne fait rien,
+ * puis il blesse en continu tout ennemi le long de la ligne. Origine et direction
+ * restent figées au lancement.
+ */
 export const beamBehavior: ProjectileBehavior = {
   update(world, proj, dt) {
     proj.life -= dt;
@@ -52,6 +67,9 @@ export const beamBehavior: ProjectileBehavior = {
       proj.dead = true; // s'arrête si le lanceur meurt
       return;
     }
+    // Phase de charge : tant que la vie restante dépasse la durée d'émission,
+    // le faisceau se charge encore et n'inflige pas de dégâts.
+    if (proj.life > proj.params.dur) return;
 
     const dx = proj.params.dx;
     const dy = proj.params.dy;

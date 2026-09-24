@@ -1,18 +1,21 @@
 import type { Spell } from './spell';
 
-const DURATION = 3; // secondes d'invulnérabilité
-const COOLDOWN = 8; // moyen-long
-const COLOR = '#22d3ee';
+// Fidèle à « Reflect » d'Acolyte Fight : un bouclier frontal qui renvoie les
+// projectiles (ils deviennent tiens) — inefficace contre les AoE. Ce n'est PAS
+// une invulnérabilité. Le renvoi est appliqué par `updateShields` (simulation).
+const DURATION = 2; // secondes
+const COOLDOWN = 10; // long
+const COLOR = '#3366ff';
 
-/** Sort : bouclier qui bloque tous les dégâts pendant quelques secondes. */
+/** Sort : érige un bouclier frontal qui réfléchit les projectiles ennemis. */
 export const shield: Spell = {
   id: 'shield',
-  name: 'Bouclier',
+  name: 'Reflet',
   cooldown: COOLDOWN,
   color: COLOR,
   description:
-    'Érige un bouclier qui bloque tous les dégâts pendant quelques secondes. ' +
-    'Parfait pour encaisser un laser ou survivre au rétrécissement.',
+    'Renvoie les attaques à projectile qui te frappent de face (elles repartent ' +
+    'contre l’ennemi). Sans effet contre les attaques de zone : ne t’y fie pas.',
   preview: 'orb',
   icon: '<path d="M12 2l8 3v6c0 5-3.4 8.4-8 11-4.6-2.6-8-6-8-11V5z"/>',
   cast(_world, caster) {

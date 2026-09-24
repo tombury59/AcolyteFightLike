@@ -1,27 +1,33 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { scale, dist } from '../vec';
-import { applyDamage } from '../combat';
 
-const SPEED = 900; // rapide
-const DAMAGE = 6; // faible
-const RADIUS = 5; // fin
-const LIFETIME = 1.2;
-const COOLDOWN = 0.4; // rapide
-const COLOR = '#67e8f9';
+// Fidèle à « Repulsor » (lightning) d'Acolyte Fight : gros knockback, 0 dégât,
+// et le tir te repousse toi aussi (recoil).
+const SPEED = 1500; // ultra-rapide
+const RADIUS = 5;
+const LIFETIME = 0.5; // longue portée
+const KNOCKBACK = 2200; // énorme poussée sur la cible
+const RECOIL = 700; // recul sur le lanceur
+const COOLDOWN = 8; // long
+const COLOR = '#00ddff';
 
-/** Sort : petit trait laser rapide qui inflige de faibles dégâts. */
+/** Sort : trait fulgurant qui projette violemment la cible — et te repousse aussi. */
 export const bolt: Spell = {
   id: 'bolt',
-  name: 'Trait laser',
+  name: 'Répulseur',
   cooldown: COOLDOWN,
   color: COLOR,
   description:
-    'Envoie un fin trait laser très rapide qui inflige de faibles dégâts. ' +
-    'Recharge éclair : à marteler pour harceler l’ennemi à distance.',
+    'Énorme recul, si ta visée est assez bonne. Ne fait aucun dégât mais éjecte ' +
+    'violemment la cible… et attention, le recul te repousse toi aussi.',
   preview: 'blink',
   icon: '<path d="M3 11h13l-4-4h3l6 5-6 5h-3l4-4H3z"/>',
   cast(world, caster) {
     const dir = caster.facing;
+    // Recul sur soi (comme le vrai Repulsor).
+    caster.knockback.x -= dir.x * RECOIL;
+    caster.knockback.y -= dir.y * RECOIL;
+    caster.slideTime = 0.5;
     world.projectiles.push({
       id: world.nextProjectileId++,
       ownerId: caster.id,
@@ -34,16 +40,19 @@ export const bolt: Spell = {
       color: COLOR,
       life: LIFETIME,
       dead: false,
-      behavior: 'bolt',
+      behavior: 'repulsor',
       renderKind: 'bolt',
-      params: { dmg: DAMAGE },
+      params: { knockback: KNOCKBACK, reflectable: 1 },
     });
   },
 };
 
-/** Trait : file tout droit, blesse une cible et disparaît à l'impact. */
-export const boltBehavior: ProjectileBehavior = {
+/** Trait : file tout droit, éjecte violemment la première cible puis disparaît. */
+export const repulsor: ProjectileBehavior = {
   update(world, proj, dt) {
+    const dir = Math.hypot(proj.vel.x, proj.vel.y) || 1;
+    const nx = proj.vel.x / dir;
+    const ny = proj.vel.y / dir;
     proj.pos.x += proj.vel.x * dt;
     proj.pos.y += proj.vel.y * dt;
     proj.life -= dt;
@@ -54,7 +63,9 @@ export const boltBehavior: ProjectileBehavior = {
     for (const p of world.players) {
       if (!p.alive || p.id === proj.ownerId) continue;
       if (dist(proj.pos, p.pos) <= proj.radius + p.radius) {
-        applyDamage(p, proj.params.dmg);
+        p.knockback.x = nx * proj.params.knockback;
+        p.knockback.y = ny * proj.params.knockback;
+        p.slideTime = 0.6; // la cible conserve son élan (part loin)
         proj.dead = true;
         break;
       }

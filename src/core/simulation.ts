@@ -75,10 +75,13 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
   resolvePlayerCollisions(world.players);
   updateDashCharges(world, dt);
 
-  // 4. Projectiles : chaque projectile est mis à jour par SON comportement.
+  // 4. Boucliers : renvoient les projectiles ennemis arrivant de face.
+  updateShields(world);
+
+  // 5. Projectiles : chaque projectile est mis à jour par SON comportement.
   updateProjectiles(world, dt);
 
-  // 5. Rétrécissement de l'arène (sauf en mode démo).
+  // 6. Rétrécissement de l'arène (sauf en mode démo).
   if (world.arenaShrinks && world.time > CONFIG.arena.shrinkDelay) {
     world.arenaRadius = Math.max(
       CONFIG.arena.minRadius,
@@ -86,7 +89,7 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
     );
   }
 
-  // 6. Dégâts hors de l'arène + mort.
+  // 7. Dégâts hors de l'arène + mort.
   for (const p of world.players) {
     if (!p.alive) continue;
     const outside = dist(p.pos, world.arenaCenter) + p.radius > world.arenaRadius;
@@ -191,6 +194,40 @@ function updateDashCharges(world: WorldState, dt: number): void {
         e.knockback.x = dx * CHARGE_PUSH;
         e.knockback.y = dy * CHARGE_PUSH;
       }
+    }
+  }
+}
+
+// --- Bouclier « Reflect » (renvoi frontal des projectiles) ---
+const REFLECT_MARGIN = 22; // épaisseur de la bande d'accroche du bouclier
+const REFLECT_COS_HALF = 0.15; // arc frontal ~162° (cos 81°)
+
+/**
+ * Bouclier fidèle à Acolyte Fight : renvoie les projectiles ennemis « réfléchissables »
+ * qui arrivent DE FACE. Le projectile repart en sens inverse et change de camp
+ * (il appartient désormais au porteur du bouclier). Sans effet sur les faisceaux
+ * (AoE) et les projectiles non marqués `reflectable`.
+ */
+function updateShields(world: WorldState): void {
+  for (const s of world.players) {
+    if (!s.alive || s.shieldTime <= 0) continue;
+    for (const proj of world.projectiles) {
+      if (proj.dead || proj.ownerId === s.id || !proj.params.reflectable) continue;
+      const dx = proj.pos.x - s.pos.x;
+      const dy = proj.pos.y - s.pos.y;
+      const d = Math.hypot(dx, dy) || 1;
+      if (d > s.radius + proj.radius + REFLECT_MARGIN) continue;
+      const nx = dx / d;
+      const ny = dy / d;
+      // Doit venir de face (dans l'arc frontal orienté vers la visée).
+      if (nx * s.facing.x + ny * s.facing.y < REFLECT_COS_HALF) continue;
+      // Renvoi : inverse la vitesse, réattribue le projectile au porteur.
+      proj.vel.x = -proj.vel.x;
+      proj.vel.y = -proj.vel.y;
+      proj.ownerId = s.id;
+      // Le pousse juste devant le bouclier pour éviter un re-contact immédiat.
+      proj.pos.x = s.pos.x + nx * (s.radius + proj.radius + 2);
+      proj.pos.y = s.pos.y + ny * (s.radius + proj.radius + 2);
     }
   }
 }

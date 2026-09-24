@@ -1,31 +1,24 @@
 import type { Spell, ProjectileBehavior } from './spell';
-import { normalize, sub, len, scale } from '../vec';
+import { scale, dist } from '../vec';
 import { applyDamage } from '../combat';
 
-const SPEED = 160; // lent
-const RADIUS = 72; // énorme
-const DPS = 10; // très peu (par seconde de contact)
-const LIFETIME = 4; // traverse presque toute l'arène
-const KNOCKBACK = 160; // = vitesse -> la cible poussée reste devant l'orbe
-const COOLDOWN = 3; // relevé
-const COLOR = '#f97316';
+// Fidèle à Acolyte Fight : recharge courte, bons dégâts, disparaît au contact.
+const SPEED = 720; // rapide
+const RADIUS = 9; // petite
+const DAMAGE = 16; // « packs a punch »
+const LIFETIME = 1.3; // portée
+const COOLDOWN = 1.5;
+const COLOR = '#ff8800';
 
-/**
- * Raideur de la correction de pénétration (0..1). On ne replace PAS la cible
- * d'un coup sur la surface (effet de téléportation) : on résorbe une fraction
- * de la pénétration par frame -> poussée fluide, comme un ressort.
- */
-const PUSH_STIFFNESS = 0.3;
-
-/** Sort : lance un orbe géant qui pousse la cible devant lui. */
+/** Sort : la bonne vieille boule de feu — rapide, frappe fort, meurt à l'impact. */
 export const fireball: Spell = {
   id: 'fireball',
   name: 'Boule de feu',
   cooldown: COOLDOWN,
   color: COLOR,
   description:
-    'Un orbe géant et lent qui traverse tout et pousse les ennemis devant lui. ' +
-    'Peu de dégâts, mais idéal pour éjecter un rival hors de l’arène.',
+    'Recharge rapide et bien puncheuse. La bonne vieille boule de feu fiable : ' +
+    'file droit, inflige de solides dégâts et disparaît au premier contact.',
   preview: 'orb',
   icon: '<path d="M12 2c1.2 3.6 4.8 4.8 4.8 8.6a4.8 4.8 0 1 1-9.6 0c0-1.7.9-2.9 1.9-3.9.1 1.8 1 2.8 2 2.8.2-2.8-.9-4-1.1-7.5z"/>',
   cast(world, caster) {
@@ -42,15 +35,19 @@ export const fireball: Spell = {
       color: COLOR,
       life: LIFETIME,
       dead: false,
-      behavior: 'fireballOrb',
+      behavior: 'projectileHit',
       renderKind: 'circle',
-      params: { dps: DPS, knockback: KNOCKBACK },
+      params: { dmg: DAMAGE, reflectable: 1 },
     });
   },
 };
 
-/** Comportement de l'orbe : avance, transperce, pousse la cible en douceur. */
-export const fireballOrb: ProjectileBehavior = {
+/**
+ * Comportement générique « projectile à impact » : file tout droit, inflige
+ * `params.dmg` à la première cible touchée puis disparaît. Réutilisé par tous
+ * les sorts à projectile simple (boule de feu, gerbe de feu...).
+ */
+export const projectileHit: ProjectileBehavior = {
   update(world, proj, dt) {
     proj.pos.x += proj.vel.x * dt;
     proj.pos.y += proj.vel.y * dt;
@@ -59,29 +56,13 @@ export const fireballOrb: ProjectileBehavior = {
       proj.dead = true;
       return;
     }
-
-    const dir = normalize(proj.vel);
     for (const p of world.players) {
       if (!p.alive || p.id === proj.ownerId) continue;
-
-      const surface = proj.radius + p.radius;
-      const toP = sub(p.pos, proj.pos);
-      const d = len(toP);
-      if (d >= surface) continue;
-
-      // Dégâts par seconde tant que la cible reste au contact.
-      applyDamage(p, proj.params.dps * dt);
-
-      // Poussée fluide : correction progressive de la pénétration (pas de snap).
-      const n = d > 1e-3 ? { x: toP.x / d, y: toP.y / d } : dir;
-      const penetration = surface - d;
-      const step = penetration * PUSH_STIFFNESS;
-      p.pos.x += n.x * step;
-      p.pos.y += n.y * step;
-
-      // Élan de portage dans le sens du tir (la cible est emportée devant l'orbe).
-      p.knockback.x = dir.x * proj.params.knockback;
-      p.knockback.y = dir.y * proj.params.knockback;
+      if (dist(proj.pos, p.pos) <= proj.radius + p.radius) {
+        applyDamage(p, proj.params.dmg);
+        proj.dead = true;
+        break;
+      }
     }
   },
 };

@@ -1,22 +1,29 @@
 import type { Spell } from './spell';
 
-const IMPULSE = 1800; // fort élan avant (le perso se rue et bouscule)
-const CHARGE = 0.35; // durée pendant laquelle il projette les ennemis heurtés
-const COOLDOWN = 1.6;
-const COLOR = '#38bdf8';
+// Fidèle à « Charge » (thrust) d'Acolyte Fight : accélération brutale vers l'avant
+// qui écarte tout sur son passage (0 dégât), et purge les effets sur soi (cleanse).
+const IMPULSE = 1900; // fort élan avant
+const CHARGE = 0.35; // fenêtre pendant laquelle on projette les ennemis heurtés
+const COOLDOWN = 6;
+const COLOR = '#ff00cc';
 
-/** Sort : ruée courte vers l'avant qui bouscule les ennemis heurtés. */
+/** Sort : ruée puissante vers l'avant qui bouscule tout ; libère de toute prise. */
 export const dash: Spell = {
   id: 'dash',
-  name: 'Dash',
+  name: 'Charge',
   cooldown: COOLDOWN,
   color: COLOR,
   description:
-    'Se rue vers l’avant à toute vitesse et bouscule les ennemis heurtés au ' +
-    'passage. Idéal pour percer ou repositionner rapidement.',
+    'Accélère d’un coup vers l’avant en écartant violemment tout ce qui se trouve ' +
+    'sur ton passage. Te libère aussi de toute prise (grappin) en cours.',
   preview: 'blink',
   icon: '<path d="M3 12l7-6v4h5V6l6 6-6 6v-4h-5v4z"/>',
-  cast(_world, caster) {
+  cast(world, caster) {
+    // Cleanse : si un ennemi te tient au grappin, la charge rompt le lien.
+    for (const o of world.players) {
+      if (o.grapple && o.grapple.targetId === caster.id) o.grapple = null;
+    }
+    caster.frozenTime = 0;
     // Élan avant amorti par le moteur : le perso glisse et projette ce qu'il heurte.
     caster.knockback.x += caster.facing.x * IMPULSE;
     caster.knockback.y += caster.facing.y * IMPULSE;
