@@ -709,6 +709,18 @@ body,
   filter: grayscale(0.5);
 }
 
+/* Mise en avant temporaire d'un sort (retour depuis sa fiche). */
+.chip-highlight {
+  animation: chip-pulse 1.6s ease;
+  box-shadow: 0 0 0 2px var(--chip-color, #7a1f2b), 0 0 16px var(--chip-color, transparent);
+}
+
+@keyframes chip-pulse {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
 .chip-small {
   padding: 5px 10px;
   font-size: 12px;

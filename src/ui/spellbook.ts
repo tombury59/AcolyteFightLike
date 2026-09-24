@@ -24,6 +24,8 @@ export class Spellbook {
   private loadout: (string | null)[] = [];
   private equipSlots?: HTMLElement;
   private equipPalette?: HTMLElement;
+  /** Sort à mettre en avant sur la page de sélection (surbrillance temporaire). */
+  private highlightSpell: string | null = null;
   private raf = 0;
 
   /** `onChange` est appelé après chaque modification du loadout (rafraîchit l'accueil). */
@@ -207,7 +209,9 @@ export class Spellbook {
 
       const spellId = this.loadout[i];
       if (spellId && SPELLS[spellId]) {
-        slot.appendChild(this.makeChip(spellId, false, i));
+        const chip = this.makeChip(spellId, false, i);
+        if (spellId === this.highlightSpell) chip.classList.add('chip-highlight');
+        slot.appendChild(chip);
         slot.title = 'Cliquer pour vider';
         slot.addEventListener('click', (e) => {
           const t = e.target as HTMLElement;
@@ -249,6 +253,7 @@ export class Spellbook {
       } else {
         chip.addEventListener('click', () => this.addToFirstEmpty(spell.id));
       }
+      if (spell.id === this.highlightSpell) chip.classList.add('chip-highlight');
       container.appendChild(chip);
     }
   }
@@ -350,30 +355,26 @@ export class Spellbook {
     stats.className = 'book-stats';
     stats.innerHTML = `<span>Recharge&nbsp;: <b>${spell.cooldown}s</b></span>`;
 
-    const equipped = this.loadout.includes(spell.id);
     const btn = document.createElement('button');
-    btn.className = 'book-equip' + (equipped ? ' equipped' : '');
-    const full = !equipped && this.loadout.indexOf(null) < 0;
-    btn.textContent = equipped ? 'Retirer' : full ? 'Emplacements pleins' : 'Équiper';
-    btn.disabled = full;
-    btn.addEventListener('click', () => this.toggleEquip(spell.id));
+    btn.className = 'book-equip';
+    btn.textContent = 'Équiper';
+    btn.addEventListener('click', () => this.goToSelection(spell.id));
 
     el.append(canvas, stats, btn);
     this.startAnim(canvas, spell);
   }
 
-  private toggleEquip(spellId: string): void {
-    const at = this.loadout.indexOf(spellId);
-    if (at >= 0) {
-      this.loadout[at] = null;
-    } else {
-      const i = this.loadout.indexOf(null);
-      if (i < 0) return;
-      this.loadout[i] = spellId;
-    }
-    store.setLoadout(this.loadout);
-    this.onChange?.();
-    this.renderSpread(this.current); // met à jour le bouton et le statut
+  /** Ramène à la page de sélection et met en avant le sort cliqué. */
+  private goToSelection(spellId: string): void {
+    this.highlightSpell = spellId;
+    this.go(0);
+    window.setTimeout(() => {
+      if (this.highlightSpell === spellId) {
+        this.highlightSpell = null;
+        this.renderSlots();
+        this.renderPalette();
+      }
+    }, 1700);
   }
 
   // --- Visuels animés ---

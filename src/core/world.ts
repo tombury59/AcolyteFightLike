@@ -69,15 +69,23 @@ const DEMO_COLORS = ['#f87171', '#c084fc', '#fbbf24', '#4ade80', '#38bdf8'];
 /**
  * Monde de démonstration pour le fond du menu : uniquement des bots qui
  * s'affrontent, arène fixe (ne rétrécit pas). Sert de décor animé.
+ * Les bots apparaissent à des positions ALÉATOIRES dans l'arène.
  */
 export function createDemoWorld(): WorldState {
   const center = vec(0, 0);
   const botSlots = [...DEFAULT_SPELL_SET];
-  const spawnRadius = 300;
-  const players = DEMO_COLORS.map((color, i) => {
-    const angle = (i / DEMO_COLORS.length) * Math.PI * 2;
-    const x = center.x + Math.cos(angle) * spawnRadius;
-    const y = center.y + Math.sin(angle) * spawnRadius;
+
+  // Nombre et couleurs aléatoires (4 ou 5 bots parmi la palette mélangée).
+  const colors = [...DEMO_COLORS].sort(() => Math.random() - 0.5);
+  const count = 4 + Math.floor(Math.random() * 2);
+  const maxR = CONFIG.arena.startRadius * 0.72;
+
+  const players = colors.slice(0, count).map((color, i) => {
+    // Distribution uniforme dans le disque (sqrt sur le rayon).
+    const angle = Math.random() * Math.PI * 2;
+    const r = Math.sqrt(Math.random()) * maxR;
+    const x = center.x + Math.cos(angle) * r;
+    const y = center.y + Math.sin(angle) * r;
     return createPlayer(`demo${i}`, `Bot ${i + 1}`, x, y, color, botSlots, true);
   });
 
