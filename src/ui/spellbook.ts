@@ -5,6 +5,16 @@ import type { Spell } from '../core/spells/spell';
 
 const DND_MIME = 'application/x-afl-spell';
 
+/** Glyphe SVG (blanc) affiché dans l'emblème d'un sort, selon son visuel. */
+function spellGlyph(preview: string): string {
+  if (preview === 'blink') {
+    // Éclair (dash).
+    return '<svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>';
+  }
+  // Flamme (orbe / boule de feu) par défaut.
+  return '<svg viewBox="0 0 24 24"><path d="M12 2c1.2 3.6 4.8 4.8 4.8 8.6a4.8 4.8 0 1 1-9.6 0c0-1.7.9-2.9 1.9-3.9.1 1.8 1 2.8 2 2.8.2-2.8-.9-4-1.1-7.5z"/></svg>';
+}
+
 /**
  * Grimoire : livre ouvert à deux pages avec effet de tourne-page.
  * - Double-page 0 : gauche = principe de sélection, droite = choix des sorts.
@@ -236,7 +246,7 @@ export class Spellbook {
 
       const card = document.createElement('div');
       card.className = 'spell-card' + (equipped ? ' equipped' : '');
-      card.style.setProperty('--chip-color', spell.color);
+      card.style.setProperty('--c', spell.color);
       card.draggable = !equipped;
       if (spell.id === this.highlightSpell) card.classList.add('chip-highlight');
 
@@ -251,14 +261,22 @@ export class Spellbook {
         card.addEventListener('dragend', () => card.classList.remove('dragging'));
       }
 
-      const head = document.createElement('div');
-      head.className = 'spell-card-head';
-      const dot = document.createElement('span');
-      dot.className = 'chip-dot';
-      const name = document.createElement('span');
+      // Haut : emblème coloré (glyphe) + nom + badge de recharge.
+      const top = document.createElement('div');
+      top.className = 'spell-card-top';
+      const emblem = document.createElement('span');
+      emblem.className = 'spell-emblem';
+      emblem.innerHTML = spellGlyph(spell.preview);
+      const titles = document.createElement('div');
+      titles.className = 'spell-card-titles';
+      const name = document.createElement('div');
       name.className = 'spell-card-name';
       name.textContent = spell.name;
-      head.append(dot, name);
+      const cd = document.createElement('div');
+      cd.className = 'spell-card-cd';
+      cd.textContent = `⟳ ${spell.cooldown}s`;
+      titles.append(name, cd);
+      top.append(emblem, titles);
 
       // Début de la description (source unique, tronquée par CSS).
       const desc = document.createElement('p');
@@ -267,19 +285,18 @@ export class Spellbook {
 
       const actions = document.createElement('div');
       actions.className = 'spell-card-actions';
-      const add = document.createElement('button');
-      add.className = 'spell-card-btn add';
-      add.textContent = equipped ? '✓' : '+';
-      add.title = equipped ? 'Déjà équipé' : full ? 'Emplacements pleins' : 'Équiper';
-      add.disabled = equipped || full;
-      add.addEventListener('click', () => this.addToFirstEmpty(spell.id));
+      const equip = document.createElement('button');
+      equip.className = 'spell-equip';
+      equip.textContent = equipped ? '✓ Équipé' : full ? 'Complet' : 'Équiper';
+      equip.disabled = equipped || full;
+      equip.addEventListener('click', () => this.addToFirstEmpty(spell.id));
       const link = document.createElement('button');
       link.className = 'spell-card-link';
       link.textContent = 'Voir la fiche';
       link.addEventListener('click', () => this.go(idx + 1));
-      actions.append(add, link);
+      actions.append(equip, link);
 
-      card.append(head, desc, actions);
+      card.append(top, desc, actions);
       container.appendChild(card);
     });
   }
