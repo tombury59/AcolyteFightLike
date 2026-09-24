@@ -1,7 +1,8 @@
-import type { PlayerInput, WorldState } from './types';
-import { normalize, sub, dist } from './vec';
+import type { Player, PlayerInput, Projectile, WorldState } from './types';
+import { normalize, sub, dist, scale } from './vec';
 import { resolvePlayerCollisions } from './physics';
 import { CONFIG } from './config';
+import { SPELLS } from './spells/definitions';
 
 /**
  * Fait avancer le monde d'un pas de temps fixe `dt`.
@@ -14,17 +15,22 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
   world.tick++;
   world.time += dt;
 
-  // 1. Déplacement des joueurs selon leur entrée.
+  // 1. Déplacement + visée + sorts pour chaque joueur.
   for (const p of world.players) {
     if (!p.alive) continue;
+    tickCooldowns(p, dt);
+
     const input = inputs.get(p.id);
     if (input) {
       const dir = normalize(input.move);
       p.vel.x = dir.x * p.speed;
       p.vel.y = dir.y * p.speed;
 
-      const aimDir = normalize(sub(input.aim, p.pos));
+      // Visée : direction de déplacement (mode pad) sinon curseur souris.
+      const aimDir = input.aimFromMove ? dir : normalize(sub(input.aim, p.pos));
       if (aimDir.x !== 0 || aimDir.y !== 0) p.facing = aimDir;
+
+      for (const spellId of input.castSpells) tryCast(world, p, spellId);
     } else {
       p.vel.x = 0;
       p.vel.y = 0;
@@ -36,7 +42,10 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
   // 2. Collisions entre joueurs.
   resolvePlayerCollisions(world.players);
 
-  // 3. Rétrécissement de l'arène.
+  // 3. Projectiles : déplacement, durée de vie, impacts.
+  updateProjectiles(world, dt);
+
+  // 4. Rétrécissement de l'arène.
   if (world.time > CONFIG.arena.shrinkDelay) {
     world.arenaRadius = Math.max(
       CONFIG.arena.minRadius,
@@ -44,16 +53,80 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
     );
   }
 
-  // 4. Dégâts hors de l'arène + mort.
+  // 5. Dégâts hors de l'arène + mort.
   for (const p of world.players) {
     if (!p.alive) continue;
     const outside = dist(p.pos, world.arenaCenter) + p.radius > world.arenaRadius;
-    if (outside) {
-      p.health -= CONFIG.player.outOfBoundsDps * dt;
-      if (p.health <= 0) {
-        p.health = 0;
-        p.alive = false;
+    if (outside) applyDamage(p, CONFIG.player.outOfBoundsDps * dt);
+  }
+}
+
+function tickCooldowns(p: Player, dt: number): void {
+  for (const id in p.cooldowns) {
+    if (p.cooldowns[id] > 0) p.cooldowns[id] = Math.max(0, p.cooldowns[id] - dt);
+  }
+}
+
+function tryCast(world: WorldState, caster: Player, spellId: string): void {
+  const spell = SPELLS[spellId];
+  if (!spell) return;
+  if ((caster.cooldowns[spellId] ?? 0) > 0) return;
+
+  switch (spell.type) {
+    case 'projectile': {
+      const spawn = {
+        x: caster.pos.x + caster.facing.x * (caster.radius + spell.radius + 2),
+        y: caster.pos.y + caster.facing.y * (caster.radius + spell.radius + 2),
+      };
+      const proj: Projectile = {
+        id: world.nextProjectileId++,
+        ownerId: caster.id,
+        pos: spawn,
+        vel: scale(caster.facing, spell.speed),
+        radius: spell.radius,
+        damage: spell.damage,
+        life: spell.lifetime,
+        color: spell.color,
+      };
+      world.projectiles.push(proj);
+      break;
+    }
+    case 'dash': {
+      caster.pos.x += caster.facing.x * spell.distance;
+      caster.pos.y += caster.facing.y * spell.distance;
+      break;
+    }
+  }
+
+  caster.cooldowns[spellId] = spell.cooldown;
+}
+
+function updateProjectiles(world: WorldState, dt: number): void {
+  const survivors: Projectile[] = [];
+  for (const proj of world.projectiles) {
+    proj.pos.x += proj.vel.x * dt;
+    proj.pos.y += proj.vel.y * dt;
+    proj.life -= dt;
+    if (proj.life <= 0) continue;
+
+    let consumed = false;
+    for (const p of world.players) {
+      if (!p.alive || p.id === proj.ownerId) continue;
+      if (dist(proj.pos, p.pos) <= proj.radius + p.radius) {
+        applyDamage(p, proj.damage);
+        consumed = true;
+        break;
       }
     }
+    if (!consumed) survivors.push(proj);
+  }
+  world.projectiles = survivors;
+}
+
+function applyDamage(p: Player, amount: number): void {
+  p.health -= amount;
+  if (p.health <= 0) {
+    p.health = 0;
+    p.alive = false;
   }
 }

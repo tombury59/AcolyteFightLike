@@ -47,10 +47,6 @@ export class Game {
     if (elapsed > 0.25) elapsed = 0.25;
     this.accumulator += elapsed;
 
-    // La caméra suit le joueur local (nécessaire avant de lire la souris).
-    const me = this.world.players.find((p) => p.id === LOCAL_PLAYER_ID);
-    if (me) this.renderer.camera.target = me.pos;
-
     // Pas de simulation fixes.
     while (this.accumulator >= CONFIG.fixedDt) {
       const inputs = new Map<string, PlayerInput>();

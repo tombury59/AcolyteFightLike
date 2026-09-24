@@ -23,9 +23,11 @@ body,
 
 #hint {
   position: fixed;
-  bottom: 12px;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
+  max-width: 92vw;
+  text-align: center;
   color: #6b7280;
   font-size: 13px;
   letter-spacing: 0.02em;
