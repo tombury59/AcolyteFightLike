@@ -301,6 +301,9 @@ body,
 /* Cadre en bois du livre. */
 .book {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: min(940px, 96vw);
   height: min(600px, 90vh);
   padding: 20px;
@@ -320,12 +323,68 @@ body,
   transform: translateY(0) scale(1);
 }
 
-/* Ensemble des deux pages posées sur le bois. */
+/* Marque-page (ruban) qui dépasse en haut, ramène à la sélection. */
+.book-ribbon {
+  position: absolute;
+  top: -8px;
+  right: 54px;
+  z-index: 8;
+  padding: 10px 12px 16px;
+  color: #f5e7c8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: linear-gradient(#8f2531, #6b1a24);
+  border: none;
+  border-radius: 3px 3px 0 0;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  transition: transform 0.15s ease;
+}
+
+.book-ribbon:hover {
+  transform: translateY(3px);
+}
+
+/* Ensemble des deux pages posées sur le bois (avec perspective pour le tourne-page). */
 .book-spread {
   position: relative;
+  flex: 1;
+  min-height: 0;
   display: flex;
-  height: 100%;
+  perspective: 2400px;
   filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
+}
+
+/* Page en train d'être tournée (feuille de parchemin qui pivote). */
+.leaf-flip {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: 6px;
+  backface-visibility: hidden;
+  background:
+    linear-gradient(120deg, rgba(0, 0, 0, 0.18), transparent 40%),
+    radial-gradient(120% 100% at 50% -5%, #f5ecd4 0%, #ecdcb6 62%, #ddc898 100%);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.35);
+  transition: transform 0.6s cubic-bezier(0.3, 0.1, 0.3, 1), opacity 0.6s ease;
+}
+
+.leaf-flip--next {
+  transform-origin: left center;
+}
+.leaf-flip--next.turning {
+  transform: rotateY(-158deg);
+  opacity: 0.15;
+}
+
+.leaf-flip--prev {
+  transform-origin: right center;
+}
+.leaf-flip--prev.turning {
+  transform: rotateY(158deg);
+  opacity: 0.15;
 }
 
 /* Tranche dorée en bas (pages empilées). */
@@ -490,29 +549,61 @@ body,
 }
 
 .book-nav {
+  flex: 0 0 auto;
   display: flex;
+  align-items: center;
   gap: 10px;
-  padding-top: 12px;
-  margin-top: 8px;
-  border-top: 1px solid rgba(90, 58, 28, 0.3);
 }
 
 .book-nav button {
   padding: 8px 14px;
-  color: #4a3319;
-  background: rgba(255, 250, 235, 0.5);
-  border: 1px solid rgba(90, 58, 28, 0.45);
+  color: #f0e2c4;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(0, 0, 0, 0.35);
   border-radius: 7px;
   cursor: pointer;
   font-size: 14px;
 }
 
-.book-nav button:hover {
-  background: rgba(255, 250, 235, 0.85);
+.book-nav button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.book-nav button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .book-close {
   margin-left: auto;
+}
+
+/* Bouton Équiper sur la fiche d'un sort. */
+.book-equip {
+  margin-top: 14px;
+  padding: 10px 22px;
+  color: #2a1a0c;
+  background: linear-gradient(#e9cd7c, #c9a24a);
+  border: 1px solid rgba(90, 58, 28, 0.6);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.book-equip:hover:not(:disabled) {
+  background: linear-gradient(#f2d98f, #d6ae55);
+}
+
+.book-equip.equipped {
+  background: rgba(255, 250, 235, 0.4);
+  color: #6b1a24;
+  border-color: rgba(107, 26, 36, 0.5);
+}
+
+.book-equip:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* En vue étroite : on empile les deux pages. */
