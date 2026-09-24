@@ -11,7 +11,7 @@ export const SPELLS: Record<string, Spell> = {
     damage: 10, // très peu (par seconde de contact)
     radius: 72, // énorme
     lifetime: 4, // traverse presque toute l'arène
-    knockback: 180, // ~= vitesse -> emporte la cible sur toute la trajectoire
+    knockback: 160, // = vitesse -> la cible poussée reste devant l'orbe
     pierce: true, // ne disparaît pas à l'impact
   },
   dash: {

@@ -128,13 +128,24 @@ function updateProjectiles(world: WorldState, dt: number): void {
     let consumed = false;
     for (const p of world.players) {
       if (!p.alive || p.id === proj.ownerId) continue;
-      if (dist(proj.pos, p.pos) <= proj.radius + p.radius) {
-        // Dégâts par seconde tant que la cible reste dans le projectile.
+      const surface = proj.radius + p.radius;
+      if (dist(proj.pos, p.pos) <= surface) {
+        // Dégâts par seconde tant que la cible reste au contact.
         applyDamage(p, proj.damage * dt);
-        // Portage : on impose la vitesse de poussée dans la direction du tir.
-        // Tant que la cible reste dans la boule, elle est emportée avec elle.
+
+        // Le joueur est REPOUSSÉ hors de l'orbe (jamais traversé) : on le
+        // replace sur la surface, du côté où il se trouve. Face à l'orbe,
+        // ce côté est l'avant -> il est poussé devant, comme un chasse-neige.
+        const toP = sub(p.pos, proj.pos);
+        const d = len(toP);
+        const n = d > 1e-3 ? { x: toP.x / d, y: toP.y / d } : dir;
+        p.pos.x = proj.pos.x + n.x * surface;
+        p.pos.y = proj.pos.y + n.y * surface;
+
+        // Élan résiduel dans le sens du tir (glisse encore un peu après le passage).
         p.knockback.x = dir.x * proj.knockback;
         p.knockback.y = dir.y * proj.knockback;
+
         if (!proj.pierce) {
           consumed = true;
           break;
