@@ -16,10 +16,10 @@ const DND_MIME = 'application/x-afl-spell';
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 // Grille de rendu de l'arbre (positions en unités du viewBox).
-const VIEW_W = 520;
+const VIEW_W = 560;
 const VIEW_H = 430;
-const NODE_R = 19;
-const colX = (col: number) => 56 + col * 102;
+const NODE_R = 17;
+const colX = (col: number) => 46 + col * 94;
 const rowY = (row: number) => 38 + row * 60;
 
 /** Emblème SVG d'un sort à partir de son icône dédiée. */
@@ -226,10 +226,10 @@ export class Spellbook {
       // Icône (SVG imbriqué 24x24 centré).
       const icon = document.createElementNS(SVGNS, 'svg');
       icon.setAttribute('viewBox', '0 0 24 24');
-      icon.setAttribute('x', String(-13));
-      icon.setAttribute('y', String(-13));
-      icon.setAttribute('width', '26');
-      icon.setAttribute('height', '26');
+      icon.setAttribute('x', String(-12));
+      icon.setAttribute('y', String(-12));
+      icon.setAttribute('width', '24');
+      icon.setAttribute('height', '24');
       icon.setAttribute('class', 'tree-node-icon');
       icon.innerHTML = spell.icon;
       g.appendChild(icon);

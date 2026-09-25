@@ -45,6 +45,8 @@ export const SPELL_TREE: TreeNode[] = [
   { id: 'triplet', tier: 2, branch: 'fire', col: 1, row: 1, cost: 1, requires: ['fireball'] },
   { id: 'flamestrike', tier: 3, branch: 'fire', col: 2, row: 1, cost: 1, requires: ['triplet'] },
   { id: 'meteorite', tier: 4, branch: 'fire', col: 3, row: 1, cost: 2, requires: ['flamestrike'] },
+  { id: 'difire', tier: 5, branch: 'fire', col: 4, row: 1, cost: 3, requires: ['meteorite'] },
+  { id: 'blast', tier: 6, branch: 'fire', col: 5, row: 1, cost: 3, requires: ['difire'] },
 
   // --- Branche Traque (projectiles guidés) ---
   { id: 'homing', tier: 2, branch: 'hunt', col: 1, row: 2, cost: 1, requires: ['fireball'] },
@@ -54,21 +56,24 @@ export const SPELL_TREE: TreeNode[] = [
   { id: 'boomerang', tier: 3, branch: 'hunt', col: 2, row: 3, cost: 1, requires: ['homing'] },
   { id: 'halo', tier: 4, branch: 'hunt', col: 3, row: 3, cost: 2, requires: ['boomerang'] },
 
-  // --- Branche Mobilité / défense ---
+  // --- Branche Mobilité / défense / évasion ---
   { id: 'teleport', tier: 2, branch: 'move', col: 1, row: 4, cost: 1, requires: ['dash'] },
   { id: 'shield', tier: 3, branch: 'move', col: 2, row: 4, cost: 1, requires: ['teleport'] },
   { id: 'whirlwind', tier: 4, branch: 'move', col: 3, row: 4, cost: 2, requires: ['shield'] },
+  { id: 'phaseOut', tier: 5, branch: 'move', col: 4, row: 4, cost: 3, requires: ['whirlwind'] },
+  { id: 'vanish', tier: 6, branch: 'move', col: 5, row: 4, cost: 3, requires: ['phaseOut'] },
 
   // --- Branche Mêlée ---
   { id: 'thrust', tier: 2, branch: 'melee', col: 1, row: 5, cost: 1, requires: ['dash'] },
   { id: 'whip', tier: 3, branch: 'melee', col: 2, row: 5, cost: 1, requires: ['thrust'] },
+  { id: 'swap', tier: 4, branch: 'melee', col: 3, row: 5, cost: 2, requires: ['whip'] },
+  { id: 'mines', tier: 4, branch: 'shock', col: 4, row: 5, cost: 3, requires: ['gravity'] },
 
   // --- Branche Choc / contrôle ---
   { id: 'bolt', tier: 2, branch: 'shock', col: 1, row: 6, cost: 1, requires: ['dash'] },
   { id: 'gravity', tier: 3, branch: 'shock', col: 2, row: 6, cost: 1, requires: ['bolt'] },
   { id: 'scourge', tier: 4, branch: 'shock', col: 3, row: 6, cost: 2, requires: ['gravity'] },
   { id: 'laser', tier: 5, branch: 'shock', col: 4, row: 6, cost: 3, requires: ['scourge'] },
-  { id: 'mines', tier: 4, branch: 'shock', col: 3, row: 5, cost: 2, requires: ['gravity'] },
 ];
 
 const BY_ID = new Map<string, TreeNode>(SPELL_TREE.map((n) => [n.id, n]));

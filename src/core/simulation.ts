@@ -5,6 +5,9 @@ import { applyDamage } from './combat';
 import { CONFIG } from './config';
 import { SPELLS, PROJECTILE_BEHAVIORS } from './spells/definitions';
 
+/** Multiplicateur de vitesse pendant l'invisibilité (vanish). */
+const VANISH_SPEED_MULT = 1.8;
+
 /**
  * Fait avancer le monde d'un pas de temps fixe `dt`.
  *
@@ -32,6 +35,14 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
     if (p.frozenTime > 0) p.frozenTime = Math.max(0, p.frozenTime - dt);
     if (p.slowTime > 0) p.slowTime = Math.max(0, p.slowTime - dt);
     if (p.rootTime > 0) p.rootTime = Math.max(0, p.rootTime - dt);
+    if (p.invulnTime > 0) p.invulnTime = Math.max(0, p.invulnTime - dt);
+    if (p.vanishTime > 0) p.vanishTime = Math.max(0, p.vanishTime - dt);
+    // Brûlure (dégâts sur la durée, ex. Difire) : s'estompe et blesse chaque frame.
+    if (p.burnTime > 0) {
+      p.burnTime = Math.max(0, p.burnTime - dt);
+      applyDamage(p, p.burnDps * dt);
+      if (p.burnTime <= 0) p.burnDps = 0;
+    }
 
     const input = inputs.get(p.id);
     if (input) {
@@ -46,7 +57,8 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
       // Le personnage se dirige vers le curseur, avec une zone morte anti-jitter.
       // Immobilisé (laser), accroché par un grappin, ou éjecté : pas de déplacement propre.
       if (p.frozenTime <= 0 && !grabbed.has(p.id) && !flung && input.follow && d > CONFIG.player.followStopDist) {
-        const spd = p.slowTime > 0 ? p.speed * 0.5 : p.speed; // ralentissement (tourbillon)
+        let spd = p.slowTime > 0 ? p.speed * 0.5 : p.speed; // ralentissement (tourbillon)
+        if (p.vanishTime > 0) spd *= VANISH_SPEED_MULT; // bonus de vitesse en invisibilité
         p.vel.x = dir.x * spd;
         p.vel.y = dir.y * spd;
       } else {
