@@ -110,10 +110,10 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
 // --- Physique du lien de grappin (portée de linkForce d'Acolyte Fight) ---
 const GRAPPLE_MIN_DIST = 45; // en deçà : plus de traction (comme minDistance)
 const GRAPPLE_MAX_DIST = 150; // bande de laisse ; au-delà, traction pleine
-const GRAPPLE_RADIAL_RATE = 3200; // force radiale (ressort) à pleine extension
+const GRAPPLE_RADIAL_RATE = 2200; // force radiale (ressort) à pleine extension
 const GRAPPLE_SELF_FACTOR = 0.2; // le lanceur est peu tiré (il reste ancré)
 const GRAPPLE_TARGET_FACTOR = 1.0; // la cible est tirée à fond
-const GRAPPLE_SIDEWAYS_RATE = 4600; // poussée latérale (le balancement au curseur)
+const GRAPPLE_SIDEWAYS_RATE = 2800; // poussée latérale (le balancement au curseur)
 
 /**
  * Lien de grappin actif (phase `linked`). Reproduit `linkForce` d'Acolyte Fight :
@@ -182,7 +182,7 @@ function updateGrapples(world: WorldState, dt: number): void {
 }
 
 /** Charge (dash) : un joueur en pleine ruée projette violemment les ennemis heurtés. */
-const CHARGE_PUSH = 1400;
+const CHARGE_PUSH = 220;
 function updateDashCharges(world: WorldState, dt: number): void {
   for (const p of world.players) {
     if (p.chargeTime <= 0) continue;
@@ -210,7 +210,7 @@ function updateDashCharges(world: WorldState, dt: number): void {
 }
 
 // --- Lien (attire la cible vers le lanceur) ---
-const PULL_RATE = 2600; // force d'attraction vers le lanceur
+const PULL_RATE = 1000; // force d'attraction vers le lanceur (amène au contact sans surtir)
 
 /**
  * Lien actif : attire la cible vers le lanceur tant que le lien dure. Fidèle à

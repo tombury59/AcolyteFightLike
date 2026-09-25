@@ -7,7 +7,7 @@ import { icons } from './icons';
 const CHARGE = 0.5; // délai avant explosion (télégraphe)
 const RADIUS = 80; // portée mêlée
 const DAMAGE = 30;
-const IMPULSE = 1400; // éjection (plus forte au centre)
+const IMPULSE = 600; // éjection (~280px au centre, plus faible au bord)
 const SELF_DAMAGE = 10;
 const COOLDOWN = 5;
 const COLOR = '#ffcc00';

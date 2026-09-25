@@ -8,7 +8,7 @@ import { icons } from './icons';
 const SPEED = 260;
 const DECAY = 0.15; // ralentit doucement -> le météore traverse plus loin
 const RADIUS = 58;
-const KNOCKBACK = 1000;
+const KNOCKBACK = 450; // pousse en labourant sans catapulter la cible
 const LIFETIME = 4.5; // dure nettement plus longtemps
 const PUSH_STIFFNESS = 0.3;
 const COOLDOWN = 9;

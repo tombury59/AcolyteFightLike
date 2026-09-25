@@ -7,8 +7,8 @@ import { icons } from './icons';
 const SPEED = 1500; // ultra-rapide
 const RADIUS = 5;
 const LIFETIME = 0.5; // longue portée
-const KNOCKBACK = 2200; // énorme poussée sur la cible
-const RECOIL = 700; // recul sur le lanceur
+const KNOCKBACK = 700; // forte poussée sur la cible (~390px de projection)
+const RECOIL = 280; // léger recul sur le lanceur (~150px)
 const COOLDOWN = 8; // long
 const COLOR = '#00ddff';
 
