@@ -41,9 +41,11 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
       const d = len(toAim);
       const dir = normalize(toAim);
 
+      // Éjecté (fort recul) : l'élan l'emporte, il ne contrôle plus son déplacement.
+      const flung = Math.hypot(p.knockback.x, p.knockback.y) > CONFIG.player.ejectControlLoss;
       // Le personnage se dirige vers le curseur, avec une zone morte anti-jitter.
-      // Immobilisé (laser) ou accroché par un grappin : pas de déplacement propre.
-      if (p.frozenTime <= 0 && !grabbed.has(p.id) && input.follow && d > CONFIG.player.followStopDist) {
+      // Immobilisé (laser), accroché par un grappin, ou éjecté : pas de déplacement propre.
+      if (p.frozenTime <= 0 && !grabbed.has(p.id) && !flung && input.follow && d > CONFIG.player.followStopDist) {
         const spd = p.slowTime > 0 ? p.speed * 0.5 : p.speed; // ralentissement (tourbillon)
         p.vel.x = dir.x * spd;
         p.vel.y = dir.y * spd;
@@ -54,7 +56,11 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
 
       if (dir.x !== 0 || dir.y !== 0) p.facing = dir;
 
-      for (const spellId of input.castSpells) tryCast(world, p, spellId);
+      // Éjecté : emporté par l'élan, il ne peut pas non plus se rattraper au sort
+      // (sinon un bot dasherait vers le centre pour annuler son éjection).
+      if (!flung) {
+        for (const spellId of input.castSpells) tryCast(world, p, spellId);
+      }
     } else {
       p.grappleHeld = false;
       p.vel.x = 0;
@@ -197,6 +203,7 @@ function updateDashCharges(world: WorldState, dt: number): void {
       if (dist(p.pos, e.pos) <= p.radius + e.radius + 4) {
         e.knockback.x = dx * CHARGE_PUSH;
         e.knockback.y = dy * CHARGE_PUSH;
+        e.slideTime = 0.5; // l'élan porte la cible (elle ne marche pas contre)
       }
     }
   }

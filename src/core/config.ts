@@ -28,5 +28,11 @@ export const CONFIG = {
     knockbackDecay: 0.9,
     /** Amortissement doux quand le joueur glisse (grappin/lancer) : conserve l'élan. */
     slideDecay: 0.985,
+    /**
+     * Au-delà de ce recul (unités/s), le joueur perd le contrôle de son
+     * déplacement : une éjection l'emporte vraiment (il ne peut pas « marcher »
+     * contre pour revenir dans l'arène).
+     */
+    ejectControlLoss: 330,
   },
 } as const;

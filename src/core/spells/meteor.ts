@@ -71,6 +71,7 @@ export const meteorBehavior: ProjectileBehavior = {
       p.pos.y += n.y * penetration * PUSH_STIFFNESS;
       p.knockback.x = dir.x * proj.params.knockback;
       p.knockback.y = dir.y * proj.params.knockback;
+      p.slideTime = 0.5; // l'élan porte la cible (elle ne marche pas contre)
     }
   },
 };
