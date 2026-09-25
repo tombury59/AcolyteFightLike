@@ -75,9 +75,9 @@ export function computeBotInput(world: WorldState, bot: Player): PlayerInput {
     return { aim: pointFrom(bot.pos, { x: -dirT.x, y: -dirT.y }, 260), follow: true, castSpells: cast };
   }
 
-  // Choix du sort offensif (en visant la cible), avec une visée imparfaite.
+  // Choix du sort offensif (en visant la cible), avec une visée imparfaite mais fluide.
   const cast = pickOffense(ready, { lowHP, targetNearEdge, safeToChannel });
-  const aim = jitterAim(bot.pos, lead, AIM_JITTER);
+  const aim = jitterAim(bot.pos, lead, aimErrorAngle(bot, world.time));
 
   // Trop loin : avancer (en tirant), dash si l'écart est grand.
   if (d > PREFERRED_DIST + BAND) {
@@ -123,13 +123,24 @@ function pointFrom(from: Vec2, dir: Vec2, d: number): Vec2 {
   return { x: from.x + dir.x * d, y: from.y + dir.y * d };
 }
 
-/** Ajoute une erreur angulaire aléatoire à la visée (tirs moins parfaits). */
-function jitterAim(from: Vec2, point: Vec2, maxRad: number): Vec2 {
+/**
+ * Erreur de visée qui DÉRIVE doucement (pas de tremblement) : somme de deux sinus
+ * lents, déphasés par bot. Les tirs restent imprécis, mais la visée est fluide.
+ */
+function aimErrorAngle(bot: Player, time: number): number {
+  let seed = 0;
+  for (let i = 0; i < bot.id.length; i++) seed += bot.id.charCodeAt(i);
+  const s = (Math.sin(time * 1.3 + seed) + 0.5 * Math.sin(time * 0.53 + seed * 1.7)) / 1.5;
+  return s * AIM_JITTER;
+}
+
+/** Applique une erreur angulaire (radians) à la visée. */
+function jitterAim(from: Vec2, point: Vec2, angleOffset: number): Vec2 {
   const dx = point.x - from.x;
   const dy = point.y - from.y;
   const d = Math.hypot(dx, dy);
   if (d < 1) return { ...point };
-  const ang = Math.atan2(dy, dx) + (Math.random() * 2 - 1) * maxRad;
+  const ang = Math.atan2(dy, dx) + angleOffset;
   return { x: from.x + Math.cos(ang) * d, y: from.y + Math.sin(ang) * d };
 }
 
