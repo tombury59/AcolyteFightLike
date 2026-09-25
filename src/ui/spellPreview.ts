@@ -578,6 +578,86 @@ function whip(s: Stage): void {
   }
 }
 
+function difire(s: Stage): void {
+  const p = period(s.t, 1.8);
+  caster(s);
+  enemy(s);
+  const from = s.CX + 26;
+  // Deux traits divergents.
+  for (const dir of [-1, 1]) {
+    const spread = 22 * dir;
+    if (p < 0.6) {
+      const q = p / 0.6;
+      const x = from + (s.TX - from) * q;
+      const y = s.CY + spread * q;
+      s.ctx.lineCap = 'round';
+      line(s, x - 18, y - spread * 0.2, x, y, s.color, 3);
+      s.ctx.lineCap = 'butt';
+    }
+  }
+  // Brûlure : petites flammes sur la cible.
+  if (p >= 0.6) {
+    for (let k = 0; k < 4; k++) {
+      const a = s.t * 6 + k * 1.6;
+      const rr = 10 + (k % 2) * 6;
+      disc(s, s.TX + Math.cos(a) * rr, s.CY - 4 + Math.sin(a) * rr - Math.abs(Math.sin(s.t * 5 + k)) * 6, 3, s.color, 0.8);
+    }
+  }
+}
+
+function swap(s: Stage): void {
+  const p = period(s.t, 2.2);
+  const from = s.CX + 26;
+  if (p < 0.4) {
+    caster(s);
+    enemy(s);
+    const x = from + (s.TX - from) * (p / 0.4);
+    s.ctx.lineCap = 'round';
+    line(s, x - 26, s.CY, x, s.CY, s.color, 4);
+    s.ctx.lineCap = 'butt';
+  } else {
+    // Les positions s'échangent.
+    const q = Math.min(1, (p - 0.4) / 0.4);
+    const cx = s.CX + (s.TX - s.CX) * easeOut(q);
+    const ex = s.TX - (s.TX - s.CX) * easeOut(q);
+    if (q < 0.9) {
+      s.ctx.globalAlpha = 0.4;
+      line(s, s.CX, s.CY, s.TX, s.CY, s.color, 2);
+      s.ctx.globalAlpha = 1;
+    }
+    enemy(s, ex);
+    disc(s, cx, s.CY, 16, CASTER);
+    line(s, cx, s.CY, cx + 24, s.CY, '#e5e7eb', 3);
+  }
+}
+
+function vanish(s: Stage): void {
+  const p = period(s.t, 2.4);
+  const cx = s.CX + 30 + p * 120;
+  const alpha = p < 0.3 ? 1 - p / 0.3 : p > 0.85 ? (p - 0.85) / 0.15 : 0.12;
+  // Traînée de vitesse.
+  s.ctx.globalAlpha = 0.3;
+  for (let k = 1; k <= 3; k++) line(s, cx - k * 16, s.CY, cx - k * 16 + 8, s.CY, s.color, 2);
+  s.ctx.globalAlpha = 1;
+  disc(s, cx, s.CY, 16, CASTER, Math.max(0.12, alpha));
+  if (alpha > 0.5) ring(s, cx, s.CY, 20 + (1 - alpha) * 16, s.color, 2, alpha - 0.4);
+}
+
+function phase(s: Stage): void {
+  const p = period(s.t, 2.0);
+  const cx = s.W * 0.5;
+  disc(s, cx, s.CY, 16, CASTER, 0.85);
+  // Halo d'invulnérabilité scintillant.
+  s.ctx.save();
+  s.ctx.setLineDash([4, 4]);
+  ring(s, cx, s.CY, 24 + Math.sin(s.t * 6) * 2, s.color, 3, 0.9);
+  s.ctx.restore();
+  // Un projectile traverse sans effet.
+  const x = -20 + p * (s.W + 40);
+  disc(s, x, s.CY, 7, ENEMY, 0.8);
+  if (Math.abs(x - cx) < 20) ring(s, x, s.CY, 10, '#fff', 2, 0.5);
+}
+
 function orb(s: Stage): void {
   const p = period(s.t, 3.2);
   const orbR = 44;
@@ -613,6 +693,10 @@ const DRAWERS: Record<string, (s: Stage) => void> = {
   mines,
   thrust,
   whip,
+  difire,
+  swap,
+  vanish,
+  phase,
   orb,
 };
 

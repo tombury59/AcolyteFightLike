@@ -24,6 +24,11 @@ import { halo } from './halo';
 import { mines, mineBehavior } from './mines';
 import { thrust } from './thrust';
 import { whip, whipBehavior } from './whip';
+import { vanish } from './vanish';
+import { phaseOut } from './phaseout';
+import { swap, swapBolt } from './swap';
+import { difire, difireBolt } from './difire';
+import { blast } from './blast';
 
 /**
  * Registre des sorts. Ajouter un sort = créer son fichier puis l'enregistrer ICI.
@@ -55,6 +60,11 @@ export const SPELLS: Record<string, Spell> = {
   [mines.id]: mines,
   [thrust.id]: thrust,
   [whip.id]: whip,
+  [vanish.id]: vanish,
+  [phaseOut.id]: phaseOut,
+  [swap.id]: swap,
+  [difire.id]: difire,
+  [blast.id]: blast,
 };
 
 /** Registre des comportements de projectiles, indexés par leur clé `behavior`. */
@@ -74,6 +84,8 @@ export const PROJECTILE_BEHAVIORS: Record<string, ProjectileBehavior> = {
   flamestrike: flamestrikeBehavior,
   mine: mineBehavior,
   whip: whipBehavior,
+  swapBolt,
+  difire: difireBolt,
 };
 
 /** Sorts équipés par défaut, dans l'ordre des emplacements. */

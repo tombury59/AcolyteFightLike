@@ -56,6 +56,14 @@ export interface Player {
   slowTime: number;
   /** Temps d'immobilisation par le Piège (marqueur visuel « stun », effet vert). */
   rootTime: number;
+  /** Invulnérabilité restante (phaseOut) : ne subit aucun dégât tant que > 0. */
+  invulnTime: number;
+  /** Invisibilité restante (vanish) : non ciblable + bonus de vitesse tant que > 0. */
+  vanishTime: number;
+  /** Brûlure restante (difire...) : subit `burnDps` dégâts/seconde tant que > 0. */
+  burnTime: number;
+  /** Dégâts par seconde de la brûlure en cours (cumulables). */
+  burnDps: number;
   /** Lien d'attraction actif (sort Lien) : attire une cible vers soi pendant un temps. */
   pull: { targetId: string; time: number } | null;
   color: string;

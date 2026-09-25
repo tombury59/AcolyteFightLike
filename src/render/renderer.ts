@@ -375,10 +375,27 @@ export class Renderer {
     const s = camera.worldToScreen(p.pos);
     const r = p.radius * camera.zoom;
 
+    // Invisibilité (vanish) : le joueur devient quasi transparent.
+    const bodyAlpha = p.vanishTime > 0 ? 0.2 : 1;
+    ctx.globalAlpha = bodyAlpha;
     ctx.beginPath();
     ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
     ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Invulnérable (phaseOut) : halo blanc scintillant.
+    if (p.invulnTime > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.6;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ffffff';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, r + 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // Bouclier actif : anneau cyan lumineux autour du joueur.
     if (p.shieldTime > 0) {

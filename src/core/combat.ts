@@ -11,6 +11,7 @@ import { CONFIG } from './config';
  */
 export function applyDamage(target: Player, amount: number): void {
   if (amount <= 0) return;
+  if (target.invulnTime > 0) return; // phaseOut : invulnérable
   target.health -= amount;
   if (target.health <= 0) {
     target.health = 0;

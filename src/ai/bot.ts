@@ -203,6 +203,7 @@ function nearestEnemy(world: WorldState, bot: Player): Player | null {
   let bestDist = Infinity;
   for (const p of world.players) {
     if (!p.alive || p.id === bot.id) continue;
+    if (p.vanishTime > 0) continue; // invisible : non ciblable
     const dd = dist(p.pos, bot.pos);
     if (dd < bestDist) {
       bestDist = dd;

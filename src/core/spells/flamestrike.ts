@@ -44,25 +44,32 @@ export const flamestrike: Spell = {
       dead: false,
       behavior: 'flamestrike',
       renderKind: 'circle',
-      params: { dmg: HIT_DAMAGE, reflectable: 1 },
+      // Paramètres d'explosion portés par le projectile (réutilisés par Déflagration).
+      params: { dmg: HIT_DAMAGE, reflectable: 1, blastR: BLAST_RADIUS, blastDmg: BLAST_DAMAGE, blastImp: BLAST_IMPULSE },
     });
   },
 };
 
-/** Fait détoner une explosion `nova` à la position d'un projectile. */
+/** Fait détoner une explosion `nova` à la position d'un projectile (params portés). */
 function detonate(world: WorldState, proj: Projectile): void {
+  const radius = proj.params.blastR ?? BLAST_RADIUS;
   world.projectiles.push({
     id: world.nextProjectileId++,
     ownerId: proj.ownerId,
     pos: { x: proj.pos.x, y: proj.pos.y },
     vel: { x: 0, y: 0 },
-    radius: BLAST_RADIUS,
+    radius,
     color: proj.color,
     life: BLAST_FUSE,
     dead: false,
     behavior: 'nova',
     renderKind: 'nova',
-    params: { radius: BLAST_RADIUS, dmg: BLAST_DAMAGE, impulse: BLAST_IMPULSE, fuse0: BLAST_FUSE },
+    params: {
+      radius,
+      dmg: proj.params.blastDmg ?? BLAST_DAMAGE,
+      impulse: proj.params.blastImp ?? BLAST_IMPULSE,
+      fuse0: BLAST_FUSE,
+    },
   });
 }
 
