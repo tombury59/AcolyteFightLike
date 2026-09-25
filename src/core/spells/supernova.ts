@@ -1,40 +1,49 @@
 import type { Spell } from './spell';
 import { icons } from './icons';
 
-// Fidèle à « Supernova » : file jusqu'au point visé puis explose en différé,
-// repoussant les ennemis (éjection plus forte au centre). Réutilise `nova`.
-const RANGE = 300; // point d'explosion devant le lanceur
-const FUSE = 0.65; // délai avant l'explosion
-const RADIUS = 95;
-const IMPULSE = 1150;
-const COOLDOWN = 7.5;
+// Supernova revisitée : une longue incantation, puis un gros faisceau dévastateur.
+// Le lanceur reste immobile pendant toute la charge et le tir (comme le faisceau).
+const CHARGE = 1.3; // longue charge (télégraphe)
+const DURATION = 0.7; // durée du gros faisceau
+const DPS = 150; // très gros dégâts
+const WIDTH = 15; // faisceau large
+const LENGTH = 4000; // portée « illimitée »
+const COOLDOWN = 10;
 const COLOR = '#ff9a00';
 
-/** Sort : explosion différée à distance qui repousse les ennemis alentour. */
+/** Sort : longue charge puis un large faisceau qui inflige d'énormes dégâts. */
 export const supernova: Spell = {
   id: 'supernova',
   name: 'Supernova',
   cooldown: COOLDOWN,
   color: COLOR,
   description:
-    'Une explosion différée qui repousse tes ennemis. L’éjection est d’autant ' +
-    'plus forte qu’ils sont proches du centre du souffle.',
+    'Une longue incantation… puis un immense faisceau dévastateur. Reste ' +
+    'immobile le temps de la charge : la récompense en dégâts est colossale.',
   preview: 'orb',
   icon: icons.supernova,
   cast(world, caster) {
-    const dir = caster.facing;
+    // Immobilisé pendant la charge ET l'émission du faisceau.
+    caster.frozenTime = CHARGE + DURATION;
     world.projectiles.push({
       id: world.nextProjectileId++,
       ownerId: caster.id,
-      pos: { x: caster.pos.x + dir.x * RANGE, y: caster.pos.y + dir.y * RANGE },
+      pos: { x: caster.pos.x, y: caster.pos.y },
       vel: { x: 0, y: 0 },
-      radius: RADIUS,
+      radius: WIDTH,
       color: COLOR,
-      life: FUSE,
+      life: CHARGE + DURATION,
       dead: false,
-      behavior: 'nova',
-      renderKind: 'nova',
-      params: { radius: RADIUS, dmg: 0, impulse: IMPULSE, follow: 0, fuse0: FUSE },
+      behavior: 'beam',
+      renderKind: 'beam',
+      params: {
+        dps: DPS,
+        width: WIDTH,
+        length: LENGTH,
+        dx: caster.facing.x,
+        dy: caster.facing.y,
+        dur: DURATION,
+      },
     });
   },
 };

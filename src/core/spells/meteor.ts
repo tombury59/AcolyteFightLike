@@ -6,10 +6,10 @@ import { icons } from './icons';
 // passage. Aucun dégât, mais une éjection massive, et rien ne l'arrête (il ignore
 // même les boucliers -> pas de `reflectable`).
 const SPEED = 260;
-const DECAY = 0.4; // ralentit fortement (comme speedDecayPerTick)
+const DECAY = 0.15; // ralentit doucement -> le météore traverse plus loin
 const RADIUS = 58;
 const KNOCKBACK = 1000;
-const LIFETIME = 2;
+const LIFETIME = 4.5; // dure nettement plus longtemps
 const PUSH_STIFFNESS = 0.3;
 const COOLDOWN = 9;
 const COLOR = '#ff2200';

@@ -1,24 +1,25 @@
 import type { Spell, ProjectileBehavior } from './spell';
+import { dist } from '../vec';
 import { icons } from './icons';
 
-// Fidèle à « Ensnare » (gravity) : crée un puits qui retient l'ennemi sur place
-// (et l'empêche de lancer des sorts) pendant que tu le canardes.
-const RANGE = 260; // distance de dépôt du puits
-const DURATION = 2; // durée du piège
-const RADIUS = 70; // rayon d'emprise
-const PULL = 900; // force de rappel vers le centre
+// Piège revisité : un faisceau moyennement rapide ; quand il touche un ennemi,
+// il le bloque sur place (immobilisation + silence) pendant quelques secondes.
+const SPEED = 520; // moyennement rapide
+const RADIUS = 8;
+const RANGE = 900; // portée avant de s'éteindre
+const ROOT_TIME = 2; // durée d'immobilisation à l'impact
 const COOLDOWN = 7.5;
 const COLOR = '#0ace00';
 
-/** Sort : dépose un puits gravitationnel qui immobilise les ennemis proches. */
+/** Sort : tire un trait qui immobilise l'ennemi touché sur place. */
 export const gravity: Spell = {
   id: 'gravity',
   name: 'Piège',
   cooldown: COOLDOWN,
   color: COLOR,
   description:
-    'Retiens un ennemi sur place pendant que tu déverses tes salves sur lui. ' +
-    'Pris dans le puits, il ne peut plus ni bouger ni lancer de sorts.',
+    'Tire un faisceau qui, au contact, cloue l’ennemi sur place : il ne peut plus ' +
+    'ni bouger ni lancer de sorts pendant que tu le canardes.',
   preview: 'orb',
   icon: icons.gravity,
   cast(world, caster) {
@@ -26,22 +27,27 @@ export const gravity: Spell = {
     world.projectiles.push({
       id: world.nextProjectileId++,
       ownerId: caster.id,
-      pos: { x: caster.pos.x + dir.x * RANGE, y: caster.pos.y + dir.y * RANGE },
-      vel: { x: 0, y: 0 },
+      pos: {
+        x: caster.pos.x + dir.x * (caster.radius + RADIUS + 2),
+        y: caster.pos.y + dir.y * (caster.radius + RADIUS + 2),
+      },
+      vel: { x: dir.x * SPEED, y: dir.y * SPEED },
       radius: RADIUS,
       color: COLOR,
-      life: DURATION,
+      life: RANGE / SPEED,
       dead: false,
       behavior: 'gravity',
-      renderKind: 'well',
-      params: {},
+      renderKind: 'bolt',
+      params: { root: ROOT_TIME },
     });
   },
 };
 
-/** Puits : attire les ennemis proches vers le centre et les fige (immobilise + silence). */
+/** Piège : file tout droit, immobilise (fige) la première cible touchée. */
 export const gravityBehavior: ProjectileBehavior = {
   update(world, proj, dt) {
+    proj.pos.x += proj.vel.x * dt;
+    proj.pos.y += proj.vel.y * dt;
     proj.life -= dt;
     if (proj.life <= 0) {
       proj.dead = true;
@@ -49,14 +55,13 @@ export const gravityBehavior: ProjectileBehavior = {
     }
     for (const p of world.players) {
       if (!p.alive || p.id === proj.ownerId) continue;
-      const dx = proj.pos.x - p.pos.x;
-      const dy = proj.pos.y - p.pos.y;
-      const d = Math.hypot(dx, dy);
-      if (d > proj.radius + p.radius) continue;
-      // Rappel vers le centre + immobilisation/silence (frozenTime rafraîchi).
-      p.pos.x += (dx / (d || 1)) * PULL * dt;
-      p.pos.y += (dy / (d || 1)) * PULL * dt;
-      p.frozenTime = Math.max(p.frozenTime, 0.15);
+      if (dist(proj.pos, p.pos) <= proj.radius + p.radius) {
+        p.frozenTime = Math.max(p.frozenTime, proj.params.root); // immobilise + réduit au silence
+        p.knockback.x = 0;
+        p.knockback.y = 0;
+        proj.dead = true;
+        break;
+      }
     }
   },
 };

@@ -187,7 +187,7 @@ export class Renderer {
     ctx.stroke();
   }
 
-  /** Rayon laser : une ligne fine depuis l'origine dans sa direction. */
+  /** Rayon : télégraphe fin pendant la charge, plein faisceau à l'émission. */
   private drawBeam(proj: Projectile): void {
     const { ctx, camera } = this;
     const o = camera.worldToScreen(proj.pos);
@@ -197,6 +197,22 @@ export class Renderer {
     const ex = o.x + dx * len;
     const ey = o.y + dy * len;
     const w = (proj.params.width ?? 5) * camera.zoom;
+
+    // Pendant la charge (vie restante > durée d'émission) : simple trait de visée.
+    const dur = proj.params.dur;
+    if (dur !== undefined && proj.life > dur) {
+      ctx.save();
+      ctx.setLineDash([10, 8]);
+      ctx.globalAlpha = 0.7;
+      ctx.strokeStyle = proj.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(o.x, o.y);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
 
     ctx.lineCap = 'round';
     ctx.globalAlpha = 0.35;
