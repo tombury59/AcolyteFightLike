@@ -7,9 +7,9 @@ const COUNT = 3;
 const SPREAD = 0.32; // écart angulaire total (~18°)
 const SPEED = 700;
 const RADIUS = 8;
-const DAMAGE = 11; // un peu moins qu'une boule de feu, mais x3
+const DAMAGE = 9; // un peu moins qu'une boule de feu, mais x3
 const LIFETIME = 1.2;
-const COOLDOWN = 3;
+const COOLDOWN = 5; // cadence ralentie (c'était trop spammable)
 const COLOR = '#ff6a00';
 
 /** Sort : trois boules de feu tirées en éventail serré. */

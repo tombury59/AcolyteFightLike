@@ -4,14 +4,14 @@ import { icons } from './icons';
 // Inspiré de « Meteorite » (pluie de météores) d'Acolyte Fight : projette une
 // volée de météores plus petits en éventail. Réutilise le comportement `meteor`
 // (traverse et pousse, aucun dégât, ignore les boucliers).
-const COUNT = 4;
+const COUNT = 3;
 const SPREAD = 0.5; // éventail (~29°)
 const SPEED = 300;
 const SPEED_JITTER = 0.2;
-const RADIUS = 30; // plus petits qu'un météore unique
-const KNOCKBACK = 340;
-const LIFETIME = 3.2;
-const COOLDOWN = 11;
+const RADIUS = 26; // plus petits qu'un météore unique
+const KNOCKBACK = 140; // faible : le météore traverse au lieu de charrier la cible
+const LIFETIME = 1.8; // portée plus courte
+const COOLDOWN = 13;
 const COLOR = '#ff3a12';
 
 /** Sort : une volée de météores qui laboure une large zone devant toi. */

@@ -7,10 +7,10 @@ import { icons } from './icons';
 const COUNT = 3;
 const ORBIT = 130; // doit correspondre au rayon d'orbite de `orbiter`
 const SPEED = 620;
-const DAMAGE = 9;
+const DAMAGE = 5; // 3 orbes qui frappent en boucle -> dégât unitaire faible
 const RADIUS = 7;
-const LIFETIME = 5;
-const COOLDOWN = 11;
+const LIFETIME = 3.5; // dure moins longtemps (moins de dégâts cumulés)
+const COOLDOWN = 13;
 const COLOR = '#ffd24a';
 
 /** Sort : un halo de trois orbes tournant autour de toi, offensif et défensif. */
