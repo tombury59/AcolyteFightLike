@@ -6,6 +6,7 @@ const PREFERRED_DIST = 230; // distance de combat idéale (kiting)
 const BAND = 55; // hystérésis autour de la distance idéale
 const DASH_CLOSE_DIST = 340; // au-delà : on peut dasher pour combler l'écart
 const PROJ_SPEED_REF = 700; // vitesse de projectile de référence (visée anticipée)
+const AIM_JITTER = 0.13; // erreur de visée aléatoire (radians, ~7.5°) -> tirs moins parfaits
 
 // --- Rôles des sorts (pour un choix tactique) ---
 const MOBILITY = new Set(['dash', 'teleport']); // repositionnement / fuite
@@ -74,17 +75,18 @@ export function computeBotInput(world: WorldState, bot: Player): PlayerInput {
     return { aim: pointFrom(bot.pos, { x: -dirT.x, y: -dirT.y }, 260), follow: true, castSpells: cast };
   }
 
-  // Choix du sort offensif (en visant la cible).
+  // Choix du sort offensif (en visant la cible), avec une visée imparfaite.
   const cast = pickOffense(ready, { lowHP, targetNearEdge, safeToChannel });
+  const aim = jitterAim(bot.pos, lead, AIM_JITTER);
 
   // Trop loin : avancer (en tirant), dash si l'écart est grand.
   if (d > PREFERRED_DIST + BAND) {
     if (d > DASH_CLOSE_DIST && has('dash') && cast.length === 0) cast.push('dash');
-    return { aim: lead, follow: true, castSpells: cast };
+    return { aim, follow: true, castSpells: cast };
   }
 
-  // À bonne distance : tenir la position et tirer (visée anticipée).
-  return { aim: lead, follow: false, castSpells: cast };
+  // À bonne distance : tenir la position et tirer (visée anticipée + imprécision).
+  return { aim, follow: false, castSpells: cast };
 }
 
 /** Sélectionne UN sort offensif selon le contexte tactique. */
@@ -119,6 +121,16 @@ function pickOffense(
 /** Point situé à `d` unités de `from` dans la direction `dir`. */
 function pointFrom(from: Vec2, dir: Vec2, d: number): Vec2 {
   return { x: from.x + dir.x * d, y: from.y + dir.y * d };
+}
+
+/** Ajoute une erreur angulaire aléatoire à la visée (tirs moins parfaits). */
+function jitterAim(from: Vec2, point: Vec2, maxRad: number): Vec2 {
+  const dx = point.x - from.x;
+  const dy = point.y - from.y;
+  const d = Math.hypot(dx, dy);
+  if (d < 1) return { ...point };
+  const ang = Math.atan2(dy, dx) + (Math.random() * 2 - 1) * maxRad;
+  return { x: from.x + Math.cos(ang) * d, y: from.y + Math.sin(ang) * d };
 }
 
 /** Visée anticipée : vise là où la cible SERA, d'après sa vitesse actuelle. */
