@@ -1,7 +1,16 @@
 import type { Player, WorldState } from './types';
 import { vec } from './vec';
 import { CONFIG } from './config';
-import { DEFAULT_SPELL_SET } from './spells/definitions';
+import { DEFAULT_SPELL_SET, SPELLS } from './spells/definitions';
+import { SLOT_COUNT } from '../input/keybindings';
+
+/** Tire un loadout aléatoire de `n` sorts distincts parmi tous les sorts existants. */
+function randomLoadout(n: number): (string | null)[] {
+  const ids = Object.keys(SPELLS).sort(() => Math.random() - 0.5);
+  const slots: (string | null)[] = Array(SLOT_COUNT).fill(null);
+  for (let i = 0; i < Math.min(n, SLOT_COUNT); i++) slots[i] = ids[i] ?? null;
+  return slots;
+}
 
 export function createPlayer(
   id: string,
@@ -82,7 +91,6 @@ const DEMO_COLORS = ['#f87171', '#c084fc', '#fbbf24', '#4ade80', '#38bdf8'];
  */
 export function createDemoWorld(): WorldState {
   const center = vec(0, 0);
-  const botSlots = [...DEFAULT_SPELL_SET];
 
   // Nombre et couleurs aléatoires (4 ou 5 bots parmi la palette mélangée).
   const colors = [...DEMO_COLORS].sort(() => Math.random() - 0.5);
@@ -95,6 +103,8 @@ export function createDemoWorld(): WorldState {
     const r = Math.sqrt(Math.random()) * maxR;
     const x = center.x + Math.cos(angle) * r;
     const y = center.y + Math.sin(angle) * r;
+    // Chaque bot de démo a un loadout ALÉATOIRE (3 ou 4 sorts) pour un décor varié.
+    const botSlots = randomLoadout(3 + Math.floor(Math.random() * 2));
     return createPlayer(`demo${i}`, `Bot ${i + 1}`, x, y, color, botSlots, true);
   });
 
