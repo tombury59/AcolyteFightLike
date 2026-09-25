@@ -7,6 +7,16 @@ import { grapple, grappleHook } from './grapple';
 import { laser, beamBehavior } from './laser';
 import { arc } from './arc';
 import { bolt, repulsor } from './bolt';
+import { meteor, meteorBehavior } from './meteor';
+import { homing, seeker } from './homing';
+import { drain } from './drain';
+import { boomerang, orbiter } from './boomerang';
+import { whirlwind, whirlwindBehavior } from './whirlwind';
+import { scourge, nova } from './scourge';
+import { supernova } from './supernova';
+import { gravity, gravityBehavior } from './gravity';
+import { bouncer, bouncerBehavior } from './bouncer';
+import { link, linkHook } from './link';
 
 /**
  * Registre des sorts. Ajouter un sort = créer son fichier puis l'enregistrer ICI.
@@ -21,6 +31,16 @@ export const SPELLS: Record<string, Spell> = {
   [dash.id]: dash,
   [teleport.id]: teleport,
   [shield.id]: shield,
+  [meteor.id]: meteor,
+  [homing.id]: homing,
+  [drain.id]: drain,
+  [boomerang.id]: boomerang,
+  [whirlwind.id]: whirlwind,
+  [scourge.id]: scourge,
+  [supernova.id]: supernova,
+  [gravity.id]: gravity,
+  [bouncer.id]: bouncer,
+  [link.id]: link,
 };
 
 /** Registre des comportements de projectiles, indexés par leur clé `behavior`. */
@@ -29,6 +49,14 @@ export const PROJECTILE_BEHAVIORS: Record<string, ProjectileBehavior> = {
   repulsor,
   beam: beamBehavior,
   grappleHook,
+  meteor: meteorBehavior,
+  seeker,
+  orbiter,
+  whirlwind: whirlwindBehavior,
+  nova,
+  gravity: gravityBehavior,
+  bouncer: bouncerBehavior,
+  linkHook,
 };
 
 /** Sorts équipés par défaut, dans l'ordre des emplacements. */

@@ -74,6 +74,7 @@ export class Renderer {
     this.drawArena(world);
     for (const proj of world.projectiles) this.drawProjectile(proj);
     this.drawGrapples(world);
+    this.drawPulls(world);
     for (const p of world.players) this.drawPlayer(p, opts.minimal ?? false);
     this.drawParticles(particles);
     if (!opts.minimal) this.drawHud(world);
@@ -162,6 +163,9 @@ export class Renderer {
     if (proj.renderKind === 'beam') return this.drawBeam(proj);
     if (proj.renderKind === 'bolt') return this.drawBolt(proj);
     if (proj.renderKind === 'grappleHook') return; // câble + crochet dessinés par drawGrapples
+    if (proj.renderKind === 'cloud') return this.drawCloud(proj);
+    if (proj.renderKind === 'well') return this.drawWell(proj);
+    if (proj.renderKind === 'nova') return this.drawNova(proj);
 
     const { ctx, camera } = this;
     const s = camera.worldToScreen(proj.pos);
@@ -232,6 +236,91 @@ export class Renderer {
     ctx.lineTo(s.x + dx * half, s.y + dy * half);
     ctx.stroke();
     ctx.lineCap = 'butt';
+  }
+
+  /** Tourbillon : disque translucide tourbillonnant. */
+  private drawCloud(proj: Projectile): void {
+    const { ctx, camera } = this;
+    const s = camera.worldToScreen(proj.pos);
+    const r = proj.radius * camera.zoom;
+    ctx.globalAlpha = 0.22;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = proj.color;
+    ctx.fill();
+    ctx.globalAlpha = 0.6;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = proj.color;
+    for (let k = 0; k < 3; k++) {
+      const a = proj.life * 6 + (k * Math.PI * 2) / 3;
+      ctx.beginPath();
+      ctx.arc(s.x + Math.cos(a) * r * 0.4, s.y + Math.sin(a) * r * 0.4, r * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** Puits gravitationnel : anneaux concentriques pulsés. */
+  private drawWell(proj: Projectile): void {
+    const { ctx, camera } = this;
+    const s = camera.worldToScreen(proj.pos);
+    const r = proj.radius * camera.zoom;
+    ctx.globalAlpha = 0.18;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = proj.color;
+    ctx.fill();
+    ctx.globalAlpha = 0.8;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = proj.color;
+    for (let k = 1; k <= 3; k++) {
+      const rr = r * ((k / 3 + proj.life * 0.6) % 1);
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, rr, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** Supernova / Surcharge : réticule qui se resserre avant l'explosion. */
+  private drawNova(proj: Projectile): void {
+    const { ctx, camera } = this;
+    const s = camera.worldToScreen(proj.pos);
+    const fuse0 = proj.params.fuse0 || 0.5;
+    const t = Math.max(0, Math.min(1, proj.life / fuse0)); // 1 -> 0 pendant la charge
+    const r = proj.radius * camera.zoom;
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = proj.color;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    // Anneau intérieur qui converge vers le centre.
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r * t, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  /** Lien : trait d'attraction entre le lanceur et sa cible. */
+  private drawPulls(world: WorldState): void {
+    const { ctx, camera } = this;
+    for (const p of world.players) {
+      if (!p.pull) continue;
+      const target = world.players.find((x) => x.id === p.pull!.targetId);
+      if (!target) continue;
+      const a = camera.worldToScreen(p.pos);
+      const b = camera.worldToScreen(target.pos);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.setLineDash([6, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   }
 
   private drawPlayer(p: Player, minimal: boolean): void {

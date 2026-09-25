@@ -30,6 +30,8 @@ export function createPlayer(
     aimPoint: vec(x + 1, y),
     slideTime: 0,
     grappleHeld: false,
+    slowTime: 0,
+    pull: null,
     color,
     isBot,
     spellSlots: [...spellSlots],

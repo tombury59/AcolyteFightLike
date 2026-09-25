@@ -48,6 +48,10 @@ export interface Player {
   slideTime: number;
   /** Vrai si la touche du grappin est maintenue cette frame (sinon le lien se coupe). */
   grappleHeld: boolean;
+  /** Temps de ralentissement restant (ex. tourbillon) : vitesse réduite tant que > 0. */
+  slowTime: number;
+  /** Lien d'attraction actif (sort Lien) : attire une cible vers soi pendant un temps. */
+  pull: { targetId: string; time: number } | null;
   color: string;
   isBot: boolean;
   /** Emplacements de sorts (longueur fixe, `null` = vide). L'index = la touche. */

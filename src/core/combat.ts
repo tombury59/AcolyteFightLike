@@ -1,4 +1,5 @@
 import type { Player } from './types';
+import { CONFIG } from './config';
 
 /**
  * Primitive de dégâts fournie par le moteur. Les sorts la composent ;
@@ -15,4 +16,10 @@ export function applyDamage(target: Player, amount: number): void {
     target.health = 0;
     target.alive = false;
   }
+}
+
+/** Soigne une cible sans dépasser sa vie maximale (utilisé par le vol de vie). */
+export function heal(target: Player, amount: number): void {
+  if (amount <= 0 || !target.alive) return;
+  target.health = Math.min(CONFIG.player.maxHealth, target.health + amount);
 }

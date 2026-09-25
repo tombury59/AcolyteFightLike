@@ -30,6 +30,7 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
     tickCooldowns(p, dt);
     if (p.shieldTime > 0) p.shieldTime = Math.max(0, p.shieldTime - dt);
     if (p.frozenTime > 0) p.frozenTime = Math.max(0, p.frozenTime - dt);
+    if (p.slowTime > 0) p.slowTime = Math.max(0, p.slowTime - dt);
 
     const input = inputs.get(p.id);
     if (input) {
@@ -42,8 +43,9 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
       // Le personnage se dirige vers le curseur, avec une zone morte anti-jitter.
       // Immobilisé (laser) ou accroché par un grappin : pas de déplacement propre.
       if (p.frozenTime <= 0 && !grabbed.has(p.id) && input.follow && d > CONFIG.player.followStopDist) {
-        p.vel.x = dir.x * p.speed;
-        p.vel.y = dir.y * p.speed;
+        const spd = p.slowTime > 0 ? p.speed * 0.5 : p.speed; // ralentissement (tourbillon)
+        p.vel.x = dir.x * spd;
+        p.vel.y = dir.y * spd;
       } else {
         p.vel.x = 0;
         p.vel.y = 0;
@@ -70,6 +72,7 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
 
   // 2. Grappins actifs : laisse la cible attachée puis l'éjecte à la fin.
   updateGrapples(world, dt);
+  updatePulls(world, dt);
 
   // 3. Collisions entre joueurs, puis poussée des charges (dash).
   resolvePlayerCollisions(world.players);
@@ -198,6 +201,44 @@ function updateDashCharges(world: WorldState, dt: number): void {
   }
 }
 
+// --- Lien (attire la cible vers le lanceur) ---
+const PULL_RATE = 2600; // force d'attraction vers le lanceur
+
+/**
+ * Lien actif : attire la cible vers le lanceur tant que le lien dure. Fidèle à
+ * « Link » d'Acolyte Fight (traction pure vers soi, contrairement au grappin qui
+ * fait tournoyer). La cible est traînée : son déplacement propre est neutralisé
+ * ailleurs (via `pull` -> voir la boucle de déplacement).
+ */
+function updatePulls(world: WorldState, dt: number): void {
+  for (const p of world.players) {
+    const link = p.pull;
+    if (!link) continue;
+    if (!p.alive) {
+      p.pull = null;
+      continue;
+    }
+    const target = world.players.find((x) => x.id === link.targetId);
+    if (!target || !target.alive) {
+      p.pull = null;
+      continue;
+    }
+    link.time -= dt;
+    if (link.time <= 0) {
+      p.pull = null;
+      continue;
+    }
+    const dx = p.pos.x - target.pos.x;
+    const dy = p.pos.y - target.pos.y;
+    const d = Math.hypot(dx, dy) || 1;
+    if (d > p.radius + target.radius + 6) {
+      target.knockback.x += (dx / d) * PULL_RATE * dt;
+      target.knockback.y += (dy / d) * PULL_RATE * dt;
+      target.slideTime = 0.2; // conserve l'élan de traction
+    }
+  }
+}
+
 // --- Bouclier « Reflect » (renvoi frontal des projectiles) ---
 const REFLECT_MARGIN = 22; // épaisseur de la bande d'accroche du bouclier
 const REFLECT_COS_HALF = 0.15; // arc frontal ~162° (cos 81°)
@@ -242,6 +283,7 @@ function tickCooldowns(p: Player, dt: number): void {
 function tryCast(world: WorldState, caster: Player, spellId: string): void {
   const spell = SPELLS[spellId];
   if (!spell) return;
+  if (caster.frozenTime > 0) return; // immobilisé / réduit au silence (Ensnare, faisceau)
   if ((caster.cooldowns[spellId] ?? 0) > 0) return;
 
   spell.cast(world, caster);
