@@ -50,6 +50,8 @@ export interface Player {
   grappleHeld: boolean;
   /** Temps de ralentissement restant (ex. tourbillon) : vitesse réduite tant que > 0. */
   slowTime: number;
+  /** Temps d'immobilisation par le Piège (marqueur visuel « stun », effet vert). */
+  rootTime: number;
   /** Lien d'attraction actif (sort Lien) : attire une cible vers soi pendant un temps. */
   pull: { targetId: string; time: number } | null;
   color: string;

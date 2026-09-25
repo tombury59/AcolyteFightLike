@@ -31,6 +31,7 @@ export function step(world: WorldState, inputs: Map<string, PlayerInput>, dt: nu
     if (p.shieldTime > 0) p.shieldTime = Math.max(0, p.shieldTime - dt);
     if (p.frozenTime > 0) p.frozenTime = Math.max(0, p.frozenTime - dt);
     if (p.slowTime > 0) p.slowTime = Math.max(0, p.slowTime - dt);
+    if (p.rootTime > 0) p.rootTime = Math.max(0, p.rootTime - dt);
 
     const input = inputs.get(p.id);
     if (input) {

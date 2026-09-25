@@ -57,6 +57,7 @@ export const gravityBehavior: ProjectileBehavior = {
       if (!p.alive || p.id === proj.ownerId) continue;
       if (dist(proj.pos, p.pos) <= proj.radius + p.radius) {
         p.frozenTime = Math.max(p.frozenTime, proj.params.root); // immobilise + réduit au silence
+        p.rootTime = Math.max(p.rootTime, proj.params.root); // marqueur visuel (effet vert)
         p.knockback.x = 0;
         p.knockback.y = 0;
         proj.dead = true;

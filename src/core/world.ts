@@ -40,6 +40,7 @@ export function createPlayer(
     slideTime: 0,
     grappleHeld: false,
     slowTime: 0,
+    rootTime: 0,
     pull: null,
     color,
     isBot,

@@ -365,6 +365,26 @@ export class Renderer {
       ctx.globalAlpha = 1;
     }
 
+    // Immobilisé par le Piège : anneaux verts tourbillonnants (effet « stun »).
+    if (p.rootTime > 0) {
+      ctx.save();
+      ctx.strokeStyle = '#0ace00';
+      ctx.globalAlpha = 0.25;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, r + 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#0ace00';
+      ctx.fill();
+      ctx.globalAlpha = 0.9;
+      ctx.lineWidth = 2.5;
+      for (let k = 0; k < 3; k++) {
+        const a = p.rootTime * 8 + (k * Math.PI * 2) / 3;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, r + 7, a, a + Math.PI * 0.7);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     // Indicateur de visée.
     ctx.beginPath();
     ctx.moveTo(s.x, s.y);
