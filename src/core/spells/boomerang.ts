@@ -1,6 +1,7 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { dist } from '../vec';
 import { applyDamage } from '../combat';
+import { icons } from './icons';
 
 // Fidèle à « Orbiter » (boomerang) : le projectile tourne autour de toi à distance
 // orbitale et blesse les ennemis qu'il croise, jusqu'à expiration.
@@ -23,7 +24,7 @@ export const boomerang: Spell = {
     'Tourne, encore et encore, autour de toi. Suit tes ennemis à distance ' +
     'orbitale jusqu’à les toucher : reste mobile pour balayer large.',
   preview: 'orb',
-  icon: '<path d="M12 3a9 9 0 106.5 15.3l-2.2-2A6 6 0 1112 6z"/>',
+  icon: icons.boomerang,
   cast(world, caster) {
     const dir = caster.facing;
     // Départ tangent : perpendiculaire à la visée pour amorcer l'orbite.

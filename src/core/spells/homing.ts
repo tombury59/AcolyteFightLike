@@ -1,6 +1,7 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { dist } from '../vec';
 import { applyDamage, heal } from '../combat';
+import { icons } from './icons';
 
 // Fidèle à « Homing » : un projectile lent qui vire vers l'ennemi le plus proche.
 const SPEED = 300;
@@ -21,7 +22,7 @@ export const homing: Spell = {
     'Poursuit l’ennemi. Gros dégâts… à condition qu’il ne sache pas esquiver. ' +
     'Le projectile vire tout seul vers la cible la plus proche.',
   preview: 'orb',
-  icon: '<path d="M12 2l3 7h7l-6 4 2 7-6-4-6 4 2-7-6-4h7z"/>',
+  icon: icons.homing,
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({

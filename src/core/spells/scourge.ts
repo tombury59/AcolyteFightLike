@@ -1,5 +1,6 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { applyDamage } from '../combat';
+import { icons } from './icons';
 
 // Fidèle à « Overload » (scourge) : après une brève charge, une explosion de
 // contact qui envoie valser les ennemis — mais qui te coûte aussi de la vie.
@@ -21,7 +22,7 @@ export const scourge: Spell = {
     'Libère une explosion de mêlée qui envoie tes ennemis valser. Prudence : ce ' +
     'sort est si puissant qu’il te coûte aussi un peu de vie.',
   preview: 'orb',
-  icon: '<path d="M12 2l2 6 6-2-4 5 4 5-6-2-2 6-2-6-6 2 4-5-4-5 6 2z"/>',
+  icon: icons.scourge,
   cast(world, caster) {
     // Coût en vie (ne peut pas te tuer) + libère les prises sur toi.
     caster.health = Math.max(1, caster.health - SELF_DAMAGE);

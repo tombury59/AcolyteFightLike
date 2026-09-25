@@ -1,4 +1,5 @@
 import type { Spell } from './spell';
+import { icons } from './icons';
 
 // Fidèle à « Reflect » d'Acolyte Fight : un bouclier frontal qui renvoie les
 // projectiles (ils deviennent tiens) — inefficace contre les AoE. Ce n'est PAS
@@ -17,7 +18,7 @@ export const shield: Spell = {
     'Renvoie les attaques à projectile qui te frappent de face (elles repartent ' +
     'contre l’ennemi). Sans effet contre les attaques de zone : ne t’y fie pas.',
   preview: 'orb',
-  icon: '<path d="M12 2l8 3v6c0 5-3.4 8.4-8 11-4.6-2.6-8-6-8-11V5z"/>',
+  icon: icons.shield,
   cast(_world, caster) {
     caster.shieldTime = DURATION;
   },

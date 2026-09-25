@@ -1,4 +1,5 @@
 import type { Spell } from './spell';
+import { icons } from './icons';
 
 // Fidèle à « Firesplatter » (firespray) d'Acolyte Fight : une gerbe de petits
 // projectiles rapides tirés dans un large arc devant soi. Colle l'ennemi pour
@@ -23,7 +24,7 @@ export const arc: Spell = {
     'Crache un flot de feu dans un large arc devant toi. Rapproche-toi pour ' +
     'concentrer tous les projectiles sur une seule cible et maximiser les dégâts.',
   preview: 'orb',
-  icon: '<path d="M4 13a8 8 0 0116 0h-3a5 5 0 00-10 0z"/>',
+  icon: icons.arc,
   cast(world, caster) {
     const base = Math.atan2(caster.facing.y, caster.facing.x);
     for (let i = 0; i < COUNT; i++) {

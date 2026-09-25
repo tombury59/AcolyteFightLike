@@ -1,4 +1,5 @@
 import type { Spell } from './spell';
+import { icons } from './icons';
 
 // Fidèle à « Charge » (thrust) d'Acolyte Fight : accélération brutale vers l'avant
 // qui écarte tout sur son passage (0 dégât), et purge les effets sur soi (cleanse).
@@ -17,7 +18,7 @@ export const dash: Spell = {
     'Accélère d’un coup vers l’avant en écartant violemment tout ce qui se trouve ' +
     'sur ton passage. Te libère aussi de toute prise (grappin) en cours.',
   preview: 'blink',
-  icon: '<path d="M3 12l7-6v4h5V6l6 6-6 6v-4h-5v4z"/>',
+  icon: icons.dash,
   cast(world, caster) {
     // Cleanse : si un ennemi te tient au grappin, la charge rompt le lien.
     for (const o of world.players) {

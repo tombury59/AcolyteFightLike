@@ -1,6 +1,7 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { scale, dist } from '../vec';
 import { applyDamage } from '../combat';
+import { icons } from './icons';
 
 // Fidèle à Acolyte Fight : recharge courte, bons dégâts, disparaît au contact.
 const SPEED = 720; // rapide
@@ -20,7 +21,7 @@ export const fireball: Spell = {
     'Recharge rapide et bien puncheuse. La bonne vieille boule de feu fiable : ' +
     'file droit, inflige de solides dégâts et disparaît au premier contact.',
   preview: 'orb',
-  icon: '<path d="M12 2c1.2 3.6 4.8 4.8 4.8 8.6a4.8 4.8 0 1 1-9.6 0c0-1.7.9-2.9 1.9-3.9.1 1.8 1 2.8 2 2.8.2-2.8-.9-4-1.1-7.5z"/>',
+  icon: icons.fireball,
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({

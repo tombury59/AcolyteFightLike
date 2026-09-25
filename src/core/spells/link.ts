@@ -1,5 +1,6 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { dist } from '../vec';
+import { icons } from './icons';
 
 // Fidèle à « Link » : tire un projectile ; à l'impact, il lie l'ennemi et
 // l'attire vers toi pendant un court instant (traction pure, pas de balancement).
@@ -20,7 +21,7 @@ export const link: Spell = {
     'Attire ton ennemi vers toi. Le trait l’accroche à l’impact puis le tire ' +
     'irrésistiblement dans ta direction pendant un court instant.',
   preview: 'orb',
-  icon: '<path d="M9 7a5 5 0 015 5v0a5 5 0 01-5 5M15 17a5 5 0 01-5-5v0a5 5 0 015-5"/>',
+  icon: icons.link,
   cast(world, caster) {
     if (caster.pull) return; // un seul lien à la fois
     const dir = caster.facing;

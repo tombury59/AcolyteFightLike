@@ -1,6 +1,7 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { dist } from '../vec';
 import { applyDamage } from '../combat';
+import { icons } from './icons';
 
 // Fidèle à « Bouncer » : file vite, rebondit sur les bords de l'arène et frappe
 // plus fort à chaque rebond. Reste au corps à corps pour l'entretenir.
@@ -23,7 +24,7 @@ export const bouncer: Spell = {
     'Plus il rebondit, plus il fait mal. Reste au contact et entretiens les ' +
     'rebonds sur les bords de l’arène pour des dégâts croissants.',
   preview: 'blink',
-  icon: '<path d="M12 3a4 4 0 100 8 4 4 0 000-8zM5 19a3 3 0 100-2 3 3 0 000 2zm14 0a3 3 0 100-2 3 3 0 000 2z"/>',
+  icon: icons.bouncer,
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({

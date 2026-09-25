@@ -1,5 +1,6 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { scale, dist } from '../vec';
+import { icons } from './icons';
 
 // Fidèle à « Repulsor » (lightning) d'Acolyte Fight : gros knockback, 0 dégât,
 // et le tir te repousse toi aussi (recoil).
@@ -21,7 +22,7 @@ export const bolt: Spell = {
     'Énorme recul, si ta visée est assez bonne. Ne fait aucun dégât mais éjecte ' +
     'violemment la cible… et attention, le recul te repousse toi aussi.',
   preview: 'blink',
-  icon: '<path d="M3 11h13l-4-4h3l6 5-6 5h-3l4-4H3z"/>',
+  icon: icons.bolt,
   cast(world, caster) {
     const dir = caster.facing;
     // Recul sur soi (comme le vrai Repulsor).

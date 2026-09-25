@@ -1,5 +1,6 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { applyDamage } from '../combat';
+import { icons } from './icons';
 
 // Fidèle à « Acolyte Beam » (kamehameha) : courte charge, puis un faisceau
 // continu très puissant. Le lanceur reste immobile pendant toute la durée
@@ -22,7 +23,7 @@ export const laser: Spell = {
     'Déchaîne un faisceau si puissant qu’il peut anéantir un ennemi à pleine vie ' +
     'en quelques secondes. Tu restes immobile le temps de le canaliser.',
   preview: 'orb',
-  icon: '<path d="M2 11h14l-3-3h3l5 4-5 4h-3l3-3H2z"/>',
+  icon: icons.laser,
   cast(world, caster) {
     // Le lanceur est ancré pendant la charge ET l'émission.
     caster.frozenTime = CHARGE + DURATION;

@@ -1,4 +1,5 @@
 import type { Spell } from './spell';
+import { icons } from './icons';
 
 // Fidèle à « Drain » : un projectile chercheur qui blesse ET rend au lanceur la
 // vie volée (vol de vie total). Réutilise le comportement `seeker` (voir homing).
@@ -20,7 +21,7 @@ export const drain: Spell = {
     'Vole un peu de vie à ton ennemi — il n’en avait sûrement pas besoin. Le ' +
     'projectile te poursuit ta cible et te rend les dégâts infligés.',
   preview: 'orb',
-  icon: '<path d="M12 3s6 6 6 10a6 6 0 11-12 0c0-4 6-10 6-10z"/>',
+  icon: icons.drain,
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({

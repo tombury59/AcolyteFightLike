@@ -1,4 +1,5 @@
 import type { Spell } from './spell';
+import { icons } from './icons';
 
 // Fidèle à « Supernova » : file jusqu'au point visé puis explose en différé,
 // repoussant les ennemis (éjection plus forte au centre). Réutilise `nova`.
@@ -19,7 +20,7 @@ export const supernova: Spell = {
     'Une explosion différée qui repousse tes ennemis. L’éjection est d’autant ' +
     'plus forte qu’ils sont proches du centre du souffle.',
   preview: 'orb',
-  icon: '<path d="M12 1l2.5 6.5L21 5l-3.5 6.5L23 14l-7 .5L14 22l-2-6-4 5 1-6-6 1 5-4-6-2 6.5-2L9 3l3 4z"/>',
+  icon: icons.supernova,
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({

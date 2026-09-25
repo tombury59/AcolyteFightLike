@@ -1,4 +1,5 @@
 import type { Spell, ProjectileBehavior } from './spell';
+import { icons } from './icons';
 
 // --- Réglages (unités monde en pixels, dt en secondes) ---
 const HOOK_SPEED = 1300; // le crochet file vite
@@ -25,7 +26,7 @@ export const grapple: Spell = {
     'curseur pour faire tournoyer l’ennemi autour de toi, puis relâche : son élan ' +
     'l’envoie dans le vide.',
   preview: 'orb',
-  icon: '<path d="M11 2h2v6h2a3 3 0 013 3v5a3 3 0 11-2 0v-5a1 1 0 00-1-1h-2v3h-2V2z"/>',
+  icon: icons.grapple,
   cast(world, caster) {
     // Sort maintenu : on ne relance pas tant qu'un grappin est déjà en cours.
     if (caster.grapple) return;

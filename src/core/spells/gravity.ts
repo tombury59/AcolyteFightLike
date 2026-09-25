@@ -1,4 +1,5 @@
 import type { Spell, ProjectileBehavior } from './spell';
+import { icons } from './icons';
 
 // Fidèle à « Ensnare » (gravity) : crée un puits qui retient l'ennemi sur place
 // (et l'empêche de lancer des sorts) pendant que tu le canardes.
@@ -19,7 +20,7 @@ export const gravity: Spell = {
     'Retiens un ennemi sur place pendant que tu déverses tes salves sur lui. ' +
     'Pris dans le puits, il ne peut plus ni bouger ni lancer de sorts.',
   preview: 'orb',
-  icon: '<path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 5a5 5 0 110 10 5 5 0 010-10zm0 3a2 2 0 100 4 2 2 0 000-4z"/>',
+  icon: icons.gravity,
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({

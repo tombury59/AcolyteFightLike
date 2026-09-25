@@ -1,5 +1,6 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { normalize, sub, len, scale } from '../vec';
+import { icons } from './icons';
 
 // Fidèle à « Meteor » : un bloc énorme, lent et lourd qui laboure tout sur son
 // passage. Aucun dégât, mais une éjection massive, et rien ne l'arrête (il ignore
@@ -23,7 +24,7 @@ export const meteor: Spell = {
     'Envoie un météore géant vers tes ennemis ! Rien n’arrête un météore : il ' +
     'traverse tout et éjecte violemment quiconque se trouve sur sa route.',
   preview: 'orb',
-  icon: '<path d="M14 3l3 3-2 2 3 3-4 1-1 4-3-3-2 2-3-3 8-8zM6 15l3 3-5 2z"/>',
+  icon: icons.meteor,
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({

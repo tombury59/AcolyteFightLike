@@ -1,5 +1,6 @@
 import type { Spell, ProjectileBehavior } from './spell';
 import { dist } from '../vec';
+import { icons } from './icons';
 
 // Fidèle à « Freezing Breath » (whirlwind) : un tourbillon lent qui ralentit les
 // ennemis pris dedans (50% / 2s) et gobe les projectiles ennemis qui s'en approchent.
@@ -21,7 +22,7 @@ export const whirlwind: Spell = {
     'Un tourbillon glaçant pour ralentir tes ennemis (−50% pendant 2 s). Il ' +
     'aspire aussi et détruit les projectiles ennemis qui s’en approchent.',
   preview: 'orb',
-  icon: '<path d="M12 2a10 10 0 00-9 6h9a2 2 0 110 4H2a10 10 0 009 6 6 6 0 010-12 6 6 0 000-4z"/>',
+  icon: icons.whirlwind,
   cast(world, caster) {
     const dir = caster.facing;
     world.projectiles.push({
