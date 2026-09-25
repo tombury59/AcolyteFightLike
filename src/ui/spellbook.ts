@@ -16,11 +16,11 @@ const DND_MIME = 'application/x-afl-spell';
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 // Grille de rendu de l'arbre (positions en unités du viewBox).
-const VIEW_W = 560;
-const VIEW_H = 380;
-const NODE_R = 26;
-const colX = (col: number) => 60 + col * 110;
-const rowY = (row: number) => 45 + row * 72;
+const VIEW_W = 520;
+const VIEW_H = 430;
+const NODE_R = 19;
+const colX = (col: number) => 56 + col * 102;
+const rowY = (row: number) => 38 + row * 60;
 
 /** Emblème SVG d'un sort à partir de son icône dédiée. */
 function spellIconSvg(icon: string): string {
@@ -226,10 +226,10 @@ export class Spellbook {
       // Icône (SVG imbriqué 24x24 centré).
       const icon = document.createElementNS(SVGNS, 'svg');
       icon.setAttribute('viewBox', '0 0 24 24');
-      icon.setAttribute('x', String(-14));
-      icon.setAttribute('y', String(-14));
-      icon.setAttribute('width', '28');
-      icon.setAttribute('height', '28');
+      icon.setAttribute('x', String(-13));
+      icon.setAttribute('y', String(-13));
+      icon.setAttribute('width', '26');
+      icon.setAttribute('height', '26');
       icon.setAttribute('class', 'tree-node-icon');
       icon.innerHTML = spell.icon;
       g.appendChild(icon);
@@ -239,9 +239,9 @@ export class Spellbook {
         const badge = document.createElementNS(SVGNS, 'text');
         badge.setAttribute('class', 'tree-node-badge');
         badge.setAttribute('x', '0');
-        badge.setAttribute('y', String(NODE_R + 14));
+        badge.setAttribute('y', String(NODE_R + 12));
         badge.setAttribute('text-anchor', 'middle');
-        badge.textContent = canUn ? `${costOf(n.id)} pt` : '🔒';
+        badge.textContent = canUn ? `${costOf(n.id)} pt` : '';
         g.appendChild(badge);
       }
 
@@ -249,7 +249,7 @@ export class Spellbook {
       const name = document.createElementNS(SVGNS, 'text');
       name.setAttribute('class', 'tree-node-name');
       name.setAttribute('x', '0');
-      name.setAttribute('y', String(-NODE_R - 8));
+      name.setAttribute('y', String(-NODE_R - 7));
       name.setAttribute('text-anchor', 'middle');
       name.textContent = spell.name;
       g.appendChild(name);

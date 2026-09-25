@@ -35,6 +35,8 @@ export function createPlayer(
     shieldTime: 0,
     frozenTime: 0,
     chargeTime: 0,
+    chargeDamage: 0,
+    chargeHits: [],
     grapple: null,
     aimPoint: vec(x + 1, y),
     slideTime: 0,

@@ -432,6 +432,152 @@ function bounce(s: Stage): void {
   ring(s, x, y, 6, s.color, 2);
 }
 
+function triplet(s: Stage): void {
+  const p = period(s.t, 1.6);
+  caster(s);
+  enemy(s);
+  const from = s.CX + 26;
+  const spread = 26;
+  for (let k = -1; k <= 1; k++) {
+    const y = s.CY + k * spread;
+    if (p < 0.75) {
+      const x = from + (s.TX - from) * (p / 0.75);
+      disc(s, x, y, 7, s.color, 0.85);
+    } else {
+      const q = (p - 0.75) / 0.25;
+      ring(s, s.TX, y, 8 + q * 20, s.color, 2, 1 - q);
+    }
+  }
+}
+
+function flamestrike(s: Stage): void {
+  const p = period(s.t, 2.0);
+  caster(s);
+  enemy(s);
+  const from = s.CX + 26;
+  if (p < 0.6) {
+    const x = from + (s.TX - from) * (p / 0.6);
+    disc(s, x, s.CY, 9, s.color, 0.7);
+    ring(s, x, s.CY, 9, s.color, 2);
+  } else {
+    const q = (p - 0.6) / 0.4;
+    // Grosse déflagration de zone.
+    disc(s, s.TX, s.CY, 20 + q * 55, s.color, 0.4 * (1 - q));
+    ring(s, s.TX, s.CY, 20 + q * 60, s.color, 4, 1 - q);
+    ring(s, s.TX, s.CY, 10 + q * 30, '#fff', 2, 1 - q);
+  }
+}
+
+function shower(s: Stage): void {
+  caster(s);
+  enemy(s);
+  const from = s.CX + 20;
+  const n = 4;
+  for (let i = 0; i < n; i++) {
+    const ang = (-0.5 + i / (n - 1)) * 0.7;
+    const pp = (s.t * 0.5 + i * 0.22) % 1;
+    const d = pp * 360;
+    const x = from + Math.cos(ang) * d;
+    const y = s.CY + Math.sin(ang) * d;
+    disc(s, x - 14, y, 12, '#555', 0.2);
+    disc(s, x, y, 15, s.color, 0.5);
+    ring(s, x, y, 15, s.color, 2, 0.8);
+  }
+}
+
+function halo(s: Stage): void {
+  const cx = s.W * 0.5;
+  disc(s, cx, s.CY, 16, CASTER);
+  const R = 74;
+  for (let k = 0; k < 3; k++) {
+    const ang = s.t * 2.4 + (k * TAU) / 3;
+    const x = cx + Math.cos(ang) * R;
+    const y = s.CY + Math.sin(ang) * R;
+    disc(s, x, y, 7, s.color);
+    ring(s, x, y, 7, s.color, 2);
+  }
+  s.ctx.globalAlpha = 0.18;
+  ring(s, cx, s.CY, R, s.color, 2);
+  s.ctx.globalAlpha = 1;
+}
+
+function mines(s: Stage): void {
+  caster(s);
+  const from = s.CX + 30;
+  const spots: [number, number][] = [
+    [from + 60, s.CY - 60],
+    [from + 130, s.CY - 20],
+    [from + 150, s.CY + 45],
+    [from + 90, s.CY + 80],
+  ];
+  const p = period(s.t, 2.6);
+  // Un ennemi passe et déclenche la 3e mine.
+  const ex = 40 + p * (s.W - 80);
+  const trigger = spots[2];
+  const near = Math.hypot(ex - trigger[0], s.CY + 40 - trigger[1]) < 40;
+  enemy(s, ex, s.CY + 40, 12);
+  spots.forEach((m, i) => {
+    if (i === 2 && near) {
+      ring(s, m[0], m[1], 14 + tri(s.t * 3) * 26, s.color, 3, 0.8);
+    } else {
+      disc(s, m[0], m[1], 5, s.color, 0.8);
+      ring(s, m[0], m[1], 5 + tri(s.t + i) * 5, s.color, 1.5, 0.5);
+    }
+  });
+}
+
+function thrust(s: Stage): void {
+  const p = period(s.t, 1.6);
+  const stop = s.TX - 30;
+  if (p < 0.45) {
+    const cx = s.CX + (stop - s.CX) * easeIn(p / 0.45);
+    enemy(s);
+    disc(s, cx - 22, s.CY, 14, CASTER, 0.3);
+    disc(s, cx, s.CY, 16, CASTER);
+    line(s, cx, s.CY, cx + 22, s.CY, s.color, 4);
+  } else {
+    const q = (p - 0.45) / 0.55;
+    // La cible est embrochée : flash + éjection.
+    if (q < 0.3) ring(s, s.TX, s.CY, 14 + q * 50, s.color, 3, 1 - q * 3);
+    enemy(s, s.TX + easeOut(q) * 90);
+    disc(s, stop, s.CY, 16, CASTER);
+  }
+}
+
+function whip(s: Stage): void {
+  const p = period(s.t, 1.8);
+  const cx = s.CX + 40;
+  disc(s, cx, s.CY, 16, CASTER);
+  const R = 110;
+  const enemyAng = -0.3;
+  const ex = cx + Math.cos(enemyAng) * (R - 20);
+  const ey = s.CY + Math.sin(enemyAng) * (R - 20);
+  if (p < 0.4) {
+    enemy(s, ex, ey, 13);
+    // Coup de fouet : arc frontal qui apparaît.
+    s.ctx.save();
+    s.ctx.globalAlpha = 0.3;
+    s.ctx.fillStyle = s.color;
+    s.ctx.beginPath();
+    s.ctx.moveTo(cx, s.CY);
+    s.ctx.arc(cx, s.CY, R, -Math.PI / 4, Math.PI / 4);
+    s.ctx.closePath();
+    s.ctx.fill();
+    s.ctx.globalAlpha = 0.9;
+    s.ctx.lineWidth = 3;
+    s.ctx.strokeStyle = '#fff';
+    s.ctx.beginPath();
+    s.ctx.arc(cx, s.CY, R, -Math.PI / 4, Math.PI / 4);
+    s.ctx.stroke();
+    s.ctx.restore();
+  } else {
+    // La cible est repoussée.
+    const q = (p - 0.4) / 0.6;
+    const d = (R - 20) + easeOut(q) * 120;
+    enemy(s, cx + Math.cos(enemyAng) * d, s.CY + Math.sin(enemyAng) * d, 13);
+  }
+}
+
 function orb(s: Stage): void {
   const p = period(s.t, 3.2);
   const orbR = 44;
@@ -460,6 +606,13 @@ const DRAWERS: Record<string, (s: Stage) => void> = {
   nova,
   ensnare,
   bounce,
+  triplet,
+  flamestrike,
+  shower,
+  halo,
+  mines,
+  thrust,
+  whip,
   orb,
 };
 

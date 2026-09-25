@@ -17,6 +17,13 @@ import { supernova } from './supernova';
 import { gravity, gravityBehavior } from './gravity';
 import { bouncer, bouncerBehavior } from './bouncer';
 import { link, linkHook } from './link';
+import { triplet } from './triplet';
+import { flamestrike, flamestrikeBehavior } from './flamestrike';
+import { meteorite } from './meteorite';
+import { halo } from './halo';
+import { mines, mineBehavior } from './mines';
+import { thrust } from './thrust';
+import { whip, whipBehavior } from './whip';
 
 /**
  * Registre des sorts. Ajouter un sort = créer son fichier puis l'enregistrer ICI.
@@ -41,6 +48,13 @@ export const SPELLS: Record<string, Spell> = {
   [gravity.id]: gravity,
   [bouncer.id]: bouncer,
   [link.id]: link,
+  [triplet.id]: triplet,
+  [flamestrike.id]: flamestrike,
+  [meteorite.id]: meteorite,
+  [halo.id]: halo,
+  [mines.id]: mines,
+  [thrust.id]: thrust,
+  [whip.id]: whip,
 };
 
 /** Registre des comportements de projectiles, indexés par leur clé `behavior`. */
@@ -57,6 +71,9 @@ export const PROJECTILE_BEHAVIORS: Record<string, ProjectileBehavior> = {
   gravity: gravityBehavior,
   bouncer: bouncerBehavior,
   linkHook,
+  flamestrike: flamestrikeBehavior,
+  mine: mineBehavior,
+  whip: whipBehavior,
 };
 
 /** Sorts équipés par défaut, dans l'ordre des emplacements. */

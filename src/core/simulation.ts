@@ -185,7 +185,12 @@ function updateGrapples(world: WorldState, dt: number): void {
 const CHARGE_PUSH = 220;
 function updateDashCharges(world: WorldState, dt: number): void {
   for (const p of world.players) {
-    if (p.chargeTime <= 0) continue;
+    if (p.chargeTime <= 0) {
+      // Fin de charge : on remet à zéro les dégâts et la liste des cibles touchées.
+      if (p.chargeDamage !== 0) p.chargeDamage = 0;
+      if (p.chargeHits.length) p.chargeHits.length = 0;
+      continue;
+    }
     p.chargeTime = Math.max(0, p.chargeTime - dt);
     // Direction de la ruée = sens du recul en cours, sinon la visée.
     let dx = p.knockback.x;
@@ -204,6 +209,11 @@ function updateDashCharges(world: WorldState, dt: number): void {
         e.knockback.x = dx * CHARGE_PUSH;
         e.knockback.y = dy * CHARGE_PUSH;
         e.slideTime = 0.5; // l'élan porte la cible (elle ne marche pas contre)
+        // Ruée offensive : blesse chaque ennemi traversé une seule fois.
+        if (p.chargeDamage > 0 && !p.chargeHits.includes(e.id)) {
+          applyDamage(e, p.chargeDamage);
+          p.chargeHits.push(e.id);
+        }
       }
     }
   }

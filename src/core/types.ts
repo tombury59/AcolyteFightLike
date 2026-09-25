@@ -34,6 +34,10 @@ export interface Player {
   frozenTime: number;
   /** Fenêtre de charge (ex. dash) durant laquelle il bouscule fort les ennemis heurtés. */
   chargeTime: number;
+  /** Dégâts infligés aux ennemis traversés pendant la charge (0 = charge sans dégât). */
+  chargeDamage: number;
+  /** Ids déjà touchés par la charge en cours (évite de blesser plusieurs fois). */
+  chargeHits: string[];
   /**
    * Grappin actif (sort maintenu). `flying` = le crochet vole vers sa cible ;
    * `linked` = un ennemi est accroché et balancé tant que le bouton est tenu.

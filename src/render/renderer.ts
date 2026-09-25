@@ -166,6 +166,7 @@ export class Renderer {
     if (proj.renderKind === 'cloud') return this.drawCloud(proj);
     if (proj.renderKind === 'well') return this.drawWell(proj);
     if (proj.renderKind === 'nova') return this.drawNova(proj);
+    if (proj.renderKind === 'whip') return this.drawWhip(proj);
 
     const { ctx, camera } = this;
     const s = camera.worldToScreen(proj.pos);
@@ -317,6 +318,34 @@ export class Renderer {
     ctx.arc(s.x, s.y, r * t, 0, Math.PI * 2);
     ctx.stroke();
     ctx.globalAlpha = 1;
+  }
+
+  /** Fouet : arc frontal lumineux qui s'estompe (dégâts déjà appliqués au lancer). */
+  private drawWhip(proj: Projectile): void {
+    const { ctx, camera } = this;
+    const s = camera.worldToScreen(proj.pos);
+    const r = proj.radius * camera.zoom;
+    const dx = proj.params.dx ?? 1;
+    const dy = proj.params.dy ?? 0;
+    const half = proj.params.half ?? Math.PI / 4;
+    const base = Math.atan2(dy, dx);
+    const life0 = proj.params.life0 || 0.18;
+    const a = Math.max(0, Math.min(1, proj.life / life0)); // 1 -> 0
+    ctx.save();
+    ctx.globalAlpha = 0.28 * a;
+    ctx.fillStyle = proj.color;
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.arc(s.x, s.y, r, base - half, base + half);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 0.9 * a;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r, base - half, base + half);
+    ctx.stroke();
+    ctx.restore();
   }
 
   /** Lien : trait d'attraction entre le lanceur et sa cible. */
