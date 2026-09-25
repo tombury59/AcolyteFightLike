@@ -137,6 +137,37 @@ function beam(s: Stage): void {
   }
 }
 
+function beamBig(s: Stage): void {
+  const p = period(s.t, 3.0);
+  caster(s);
+  enemy(s);
+  const from = s.CX + 26;
+  if (p < 0.65) {
+    // Longue charge : orbe qui grossit + réticule pulsé.
+    const q = p / 0.65;
+    const g = Math.sin(q * Math.PI * 0.5);
+    s.ctx.save();
+    s.ctx.setLineDash([6, 6]);
+    s.ctx.globalAlpha = 0.4 + 0.3 * g;
+    line(s, from, s.CY, s.W, s.CY, s.color, 2);
+    s.ctx.restore();
+    ring(s, from, s.CY, 10 + g * 22, s.color, 2, 0.5);
+    disc(s, from, s.CY, 6 + g * 18, s.color, 0.6 + 0.4 * g);
+  } else {
+    // Décharge : faisceau très large.
+    const q = (p - 0.65) / 0.35;
+    const w = 16 + Math.sin(q * Math.PI) * 8;
+    const { ctx } = s;
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.3;
+    line(s, from, s.CY, s.W, s.CY, s.color, w * 2.4);
+    ctx.globalAlpha = 1;
+    line(s, from, s.CY, s.W, s.CY, '#fff', w);
+    line(s, from, s.CY, s.W, s.CY, s.color, w * 0.5);
+    ctx.lineCap = 'butt';
+  }
+}
+
 function spray(s: Stage): void {
   caster(s);
   const from = s.CX + 26;
@@ -412,6 +443,7 @@ const DRAWERS: Record<string, (s: Stage) => void> = {
   projectile,
   bolt,
   beam,
+  beamBig,
   spray,
   swing,
   pull,

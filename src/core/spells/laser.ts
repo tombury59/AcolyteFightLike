@@ -2,10 +2,9 @@ import type { Spell, ProjectileBehavior } from './spell';
 import { applyDamage } from '../combat';
 import { icons } from './icons';
 
-// Fidèle à « Acolyte Beam » (kamehameha) : courte charge, puis un faisceau
-// continu très puissant. Le lanceur reste immobile pendant toute la durée
-// (dans le jeu de base, bouger annule le faisceau).
-const CHARGE = 0.3; // charge avant émission (s)
+// Faisceau ancré : incantation TRÈS courte, ne fige PAS le lanceur (il peut
+// continuer de bouger), mais le rayon reste figé là où il a été lancé.
+const CHARGE = 0.12; // incantation courte avant émission (s)
 const DURATION = 1.6; // durée du faisceau (s)
 const DPS = 60; // dégâts par seconde de contact (peut nettoyer une barre entière)
 const WIDTH = 5; // demi-largeur du rayon
@@ -13,20 +12,19 @@ const LENGTH = 4000; // portée « illimitée »
 const COOLDOWN = 6;
 const COLOR = '#44ddff';
 
-/** Sort : déchaîne un faisceau continu dévastateur ; immobilise le lanceur. */
+/** Sort : déchaîne un faisceau ancré à sa position ; le lanceur reste libre de bouger. */
 export const laser: Spell = {
   id: 'laser',
   name: 'Faisceau',
   cooldown: COOLDOWN,
   color: COLOR,
   description:
-    'Déchaîne un faisceau si puissant qu’il peut anéantir un ennemi à pleine vie ' +
-    'en quelques secondes. Tu restes immobile le temps de le canaliser.',
+    'Déchaîne un faisceau puissant, ancré là où tu le lances. Incantation ' +
+    'quasi instantanée : tu restes libre de bouger pendant qu’il crache ses dégâts.',
   preview: 'beam',
   icon: icons.laser,
   cast(world, caster) {
-    // Le lanceur est ancré pendant la charge ET l'émission.
-    caster.frozenTime = CHARGE + DURATION;
+    // Pas d'immobilisation : seuls l'origine et la direction du rayon sont figées.
     world.projectiles.push({
       id: world.nextProjectileId++,
       ownerId: caster.id,
