@@ -5,9 +5,9 @@ import { icons } from './icons';
 // Fidèle à « Overload » (scourge) : après une brève charge, une explosion de
 // contact qui envoie valser les ennemis — mais qui te coûte aussi de la vie.
 const CHARGE = 0.5; // délai avant explosion (télégraphe)
-const RADIUS = 80; // portée mêlée
+const RADIUS = 90; // portée mêlée
 const DAMAGE = 30;
-const IMPULSE = 600; // éjection (~280px au centre, plus faible au bord)
+const IMPULSE = 1100; // forte éjection (~480px au centre)
 const SELF_DAMAGE = 10;
 const COOLDOWN = 5;
 const COLOR = '#ffcc00';
@@ -73,8 +73,8 @@ export const nova: ProjectileBehavior = {
       if (proj.params.dmg > 0) applyDamage(p, proj.params.dmg);
       const nx = d > 1e-3 ? dx / d : 1;
       const ny = d > 1e-3 ? dy / d : 0;
-      // Plus fort au centre : de 100% (centre) à ~40% (bord).
-      const falloff = 1 - 0.6 * Math.min(1, d / proj.params.radius);
+      // Plus fort au centre : de 100% (centre) à ~65% (bord).
+      const falloff = 1 - 0.35 * Math.min(1, d / proj.params.radius);
       p.knockback.x = nx * proj.params.impulse * falloff;
       p.knockback.y = ny * proj.params.impulse * falloff;
       p.slideTime = 0.4;
