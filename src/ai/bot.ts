@@ -47,23 +47,18 @@ export function computeBotInput(world: WorldState, bot: Player): PlayerInput {
   }
 
   // ===== 2) Réagir à un projectile entrant =====
+  // Les bots N'ESQUIVENT PLUS les projectiles (difficulté réduite). Ils se
+  // contentent de bloquer avec une défense s'ils en ont une de prête et de face.
   const threat = incomingThreat(world, bot);
-  if (threat) {
+  if (threat && threat.reflectable) {
     // Bouclier : renvoie les projectiles réfléchissables arrivant de face.
-    if (threat.reflectable && has('shield')) {
+    if (has('shield')) {
       return { aim: { ...threat.from }, follow: false, castSpells: ['shield'] };
     }
     // Tourbillon : gobe le projectile — on avance dedans.
-    if (threat.reflectable && has('whirlwind')) {
+    if (has('whirlwind')) {
       return { aim: { ...threat.from }, follow: true, castSpells: ['whirlwind'] };
     }
-    // Sinon : esquiver perpendiculairement, blink si le danger est imminent.
-    const cast: string[] = [];
-    if (threat.severe) {
-      const mob = has('teleport') ? 'teleport' : has('dash') ? 'dash' : null;
-      if (mob) cast.push(mob);
-    }
-    return { aim: pointFrom(bot.pos, threat.dodge, 260), follow: true, castSpells: cast };
   }
 
   // ===== 3) Positionnement + attaque =====

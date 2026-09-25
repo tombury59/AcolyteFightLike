@@ -94,9 +94,9 @@ function projectile(s: Stage): void {
 
 function bolt(s: Stage): void {
   const p = period(s.t, 1.5);
-  caster(s);
   const from = s.CX + 26;
   if (p < 0.35) {
+    caster(s);
     const x = from + (s.TX - from) * (p / 0.35);
     enemy(s);
     s.ctx.lineCap = 'round';
@@ -104,6 +104,8 @@ function bolt(s: Stage): void {
     s.ctx.lineCap = 'butt';
   } else {
     const q = (p - 0.35) / 0.65;
+    // Le lanceur recule aussi (recoil), la cible est éjectée plus fort.
+    caster(s, s.CX - easeOut(q) * 42);
     const tx = s.TX + easeOut(q) * 90;
     enemy(s, tx);
     ring(s, tx, s.CY, 14 + q * 10, s.color, 2, 1 - q);
