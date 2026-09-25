@@ -17,7 +17,7 @@ export const dash: Spell = {
   description:
     'Accélère d’un coup vers l’avant en écartant violemment tout ce qui se trouve ' +
     'sur ton passage. Te libère aussi de toute prise (grappin) en cours.',
-  preview: 'blink',
+  preview: 'dash',
   icon: icons.dash,
   cast(world, caster) {
     // Cleanse : si un ennemi te tient au grappin, la charge rompt le lien.

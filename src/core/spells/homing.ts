@@ -21,7 +21,7 @@ export const homing: Spell = {
   description:
     'Poursuit l’ennemi. Gros dégâts… à condition qu’il ne sache pas esquiver. ' +
     'Le projectile vire tout seul vers la cible la plus proche.',
-  preview: 'orb',
+  preview: 'seek',
   icon: icons.homing,
   cast(world, caster) {
     const dir = caster.facing;

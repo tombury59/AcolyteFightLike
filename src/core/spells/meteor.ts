@@ -23,7 +23,7 @@ export const meteor: Spell = {
   description:
     'Envoie un météore géant vers tes ennemis ! Rien n’arrête un météore : il ' +
     'traverse tout et éjecte violemment quiconque se trouve sur sa route.',
-  preview: 'orb',
+  preview: 'meteor',
   icon: icons.meteor,
   cast(world, caster) {
     const dir = caster.facing;

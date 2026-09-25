@@ -23,7 +23,7 @@ export const bouncer: Spell = {
   description:
     'Plus il rebondit, plus il fait mal. Reste au contact et entretiens les ' +
     'rebonds sur les bords de l’arène pour des dégâts croissants.',
-  preview: 'blink',
+  preview: 'bounce',
   icon: icons.bouncer,
   cast(world, caster) {
     const dir = caster.facing;

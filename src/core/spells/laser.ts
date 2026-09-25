@@ -22,7 +22,7 @@ export const laser: Spell = {
   description:
     'Déchaîne un faisceau si puissant qu’il peut anéantir un ennemi à pleine vie ' +
     'en quelques secondes. Tu restes immobile le temps de le canaliser.',
-  preview: 'orb',
+  preview: 'beam',
   icon: icons.laser,
   cast(world, caster) {
     // Le lanceur est ancré pendant la charge ET l'émission.

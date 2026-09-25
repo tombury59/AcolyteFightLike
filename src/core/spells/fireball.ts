@@ -20,7 +20,7 @@ export const fireball: Spell = {
   description:
     'Recharge rapide et bien puncheuse. La bonne vieille boule de feu fiable : ' +
     'file droit, inflige de solides dégâts et disparaît au premier contact.',
-  preview: 'orb',
+  preview: 'projectile',
   icon: icons.fireball,
   cast(world, caster) {
     const dir = caster.facing;

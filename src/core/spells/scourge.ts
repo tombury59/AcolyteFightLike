@@ -21,7 +21,7 @@ export const scourge: Spell = {
   description:
     'Libère une explosion de mêlée qui envoie tes ennemis valser. Prudence : ce ' +
     'sort est si puissant qu’il te coûte aussi un peu de vie.',
-  preview: 'orb',
+  preview: 'nova',
   icon: icons.scourge,
   cast(world, caster) {
     // Coût en vie (ne peut pas te tuer) + libère les prises sur toi.

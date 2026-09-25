@@ -20,7 +20,7 @@ export const gravity: Spell = {
   description:
     'Tire un faisceau qui, au contact, cloue l’ennemi sur place : il ne peut plus ' +
     'ni bouger ni lancer de sorts pendant que tu le canardes.',
-  preview: 'orb',
+  preview: 'ensnare',
   icon: icons.gravity,
   cast(world, caster) {
     const dir = caster.facing;

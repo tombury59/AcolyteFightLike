@@ -23,7 +23,7 @@ export const arc: Spell = {
   description:
     'Crache un flot de feu dans un large arc devant toi. Rapproche-toi pour ' +
     'concentrer tous les projectiles sur une seule cible et maximiser les dégâts.',
-  preview: 'orb',
+  preview: 'spray',
   icon: icons.arc,
   cast(world, caster) {
     const base = Math.atan2(caster.facing.y, caster.facing.x);

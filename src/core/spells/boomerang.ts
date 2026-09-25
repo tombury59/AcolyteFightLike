@@ -23,7 +23,7 @@ export const boomerang: Spell = {
   description:
     'Tourne, encore et encore, autour de toi. Suit tes ennemis à distance ' +
     'orbitale jusqu’à les toucher : reste mobile pour balayer large.',
-  preview: 'orb',
+  preview: 'orbit',
   icon: icons.boomerang,
   cast(world, caster) {
     const dir = caster.facing;

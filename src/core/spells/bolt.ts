@@ -21,7 +21,7 @@ export const bolt: Spell = {
   description:
     'Énorme recul, si ta visée est assez bonne. Ne fait aucun dégât mais éjecte ' +
     'violemment la cible… et attention, le recul te repousse toi aussi.',
-  preview: 'blink',
+  preview: 'bolt',
   icon: icons.bolt,
   cast(world, caster) {
     const dir = caster.facing;

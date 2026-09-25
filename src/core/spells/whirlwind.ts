@@ -21,7 +21,7 @@ export const whirlwind: Spell = {
   description:
     'Un tourbillon glaçant pour ralentir tes ennemis (−50% pendant 2 s). Il ' +
     'aspire aussi et détruit les projectiles ennemis qui s’en approchent.',
-  preview: 'orb',
+  preview: 'swirl',
   icon: icons.whirlwind,
   cast(world, caster) {
     const dir = caster.facing;

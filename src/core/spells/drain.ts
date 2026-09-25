@@ -20,7 +20,7 @@ export const drain: Spell = {
   description:
     'Vole un peu de vie à ton ennemi — il n’en avait sûrement pas besoin. Le ' +
     'projectile te poursuit ta cible et te rend les dégâts infligés.',
-  preview: 'orb',
+  preview: 'drain',
   icon: icons.drain,
   cast(world, caster) {
     const dir = caster.facing;

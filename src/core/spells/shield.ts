@@ -17,7 +17,7 @@ export const shield: Spell = {
   description:
     'Renvoie les attaques à projectile qui te frappent de face (elles repartent ' +
     'contre l’ennemi). Sans effet contre les attaques de zone : ne t’y fie pas.',
-  preview: 'orb',
+  preview: 'shield',
   icon: icons.shield,
   cast(_world, caster) {
     caster.shieldTime = DURATION;

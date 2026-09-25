@@ -25,7 +25,7 @@ export const grapple: Spell = {
     'Maintiens pour lancer le crochet vers ta visée. Une fois accroché, bouge le ' +
     'curseur pour faire tournoyer l’ennemi autour de toi, puis relâche : son élan ' +
     'l’envoie dans le vide.',
-  preview: 'orb',
+  preview: 'swing',
   icon: icons.grapple,
   cast(world, caster) {
     // Sort maintenu : on ne relance pas tant qu'un grappin est déjà en cours.

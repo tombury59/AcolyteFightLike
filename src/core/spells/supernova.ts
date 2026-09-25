@@ -20,7 +20,7 @@ export const supernova: Spell = {
   description:
     'Une longue incantation… puis un immense faisceau dévastateur. Reste ' +
     'immobile le temps de la charge : la récompense en dégâts est colossale.',
-  preview: 'orb',
+  preview: 'beam',
   icon: icons.supernova,
   cast(world, caster) {
     // Immobilisé pendant la charge ET l'émission du faisceau.

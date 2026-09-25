@@ -20,7 +20,7 @@ export const link: Spell = {
   description:
     'Attire ton ennemi vers toi. Le trait l’accroche à l’impact puis le tire ' +
     'irrésistiblement dans ta direction pendant un court instant.',
-  preview: 'orb',
+  preview: 'pull',
   icon: icons.link,
   cast(world, caster) {
     if (caster.pull) return; // un seul lien à la fois

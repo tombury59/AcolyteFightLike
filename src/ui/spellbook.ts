@@ -2,6 +2,7 @@ import { store } from '../storage/localStore';
 import { SPELLS } from '../core/spells/definitions';
 import { SLOT_COUNT } from '../input/keybindings';
 import type { Spell } from '../core/spells/spell';
+import { drawSpellPreview } from './spellPreview';
 
 const DND_MIME = 'application/x-afl-spell';
 
@@ -327,8 +328,7 @@ export class Spellbook {
     const start = performance.now();
     const loop = (now: number) => {
       const t = (now - start) / 1000;
-      if (spell.preview === 'blink') this.drawBlink(ctx, canvas, spell.color, t);
-      else this.drawOrb(ctx, canvas, spell.color, t);
+      drawSpellPreview(ctx, canvas, spell.preview, spell.color, t);
       this.raf = requestAnimationFrame(loop);
     };
     this.raf = requestAnimationFrame(loop);
@@ -337,79 +337,5 @@ export class Spellbook {
   private stopAnim(): void {
     if (this.raf) cancelAnimationFrame(this.raf);
     this.raf = 0;
-  }
-
-  private clear(ctx: CanvasRenderingContext2D, c: HTMLCanvasElement): void {
-    ctx.fillStyle = '#0b0e14';
-    ctx.fillRect(0, 0, c.width, c.height);
-  }
-
-  private drawOrb(ctx: CanvasRenderingContext2D, c: HTMLCanvasElement, color: string, t: number): void {
-    this.clear(ctx, c);
-    const cy = c.height / 2;
-    const period = 3.2;
-    const p = (t % period) / period;
-    const orbR = 46;
-    const x = -orbR + p * (c.width + orbR * 2);
-
-    const targetR = 12;
-    const tx = x + orbR + targetR;
-    ctx.beginPath();
-    ctx.arc(tx, cy, targetR, 0, Math.PI * 2);
-    ctx.fillStyle = '#f87171';
-    ctx.fill();
-
-    ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    ctx.arc(x, cy, orbR, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.beginPath();
-    ctx.arc(x, cy, orbR, 0, Math.PI * 2);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = color;
-    ctx.stroke();
-  }
-
-  private drawBlink(ctx: CanvasRenderingContext2D, c: HTMLCanvasElement, color: string, t: number): void {
-    this.clear(ctx, c);
-    const cy = c.height / 2;
-    const period = 1.6;
-    const p = (t % period) / period;
-    const startX = 90;
-    const jump = 170;
-    const r = 16;
-    const x = p < 0.5 ? startX : startX + jump;
-
-    if (p >= 0.5 && p < 0.72) {
-      const fade = 1 - (p - 0.5) / 0.22;
-      ctx.globalAlpha = 0.5 * fade;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(startX, cy);
-      ctx.lineTo(startX + jump, cy);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-    if (p >= 0.48 && p < 0.6) {
-      ctx.beginPath();
-      ctx.arc(x, cy, r + 10, 0, Math.PI * 2);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-
-    ctx.beginPath();
-    ctx.arc(x, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = '#4ade80';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(x, cy);
-    ctx.lineTo(x + r * 1.8, cy);
-    ctx.strokeStyle = '#e5e7eb';
-    ctx.lineWidth = 3;
-    ctx.stroke();
   }
 }
