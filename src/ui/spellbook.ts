@@ -11,10 +11,9 @@ function spellIconSvg(icon: string): string {
 }
 
 /**
- * Grimoire : livre ouvert à deux pages avec effet de tourne-page.
- * - Double-page 0 : gauche = principe de sélection, droite = choix des sorts.
- * - Double-page k : sort k — gauche = description, droite = illustration + Équiper.
- * Un marque-page ramène directement à la sélection.
+ * Grimoire : une barre d'emplacements (loadout) fixe AU-DESSUS du livre, visible
+ * sur toutes les pages, et un livre-catalogue dont chaque double-page présente un
+ * sort (description à gauche, illustration + bouton Équiper à droite).
  */
 export class Spellbook {
   private overlay: HTMLDivElement;
@@ -23,14 +22,13 @@ export class Spellbook {
   private rightPage!: HTMLDivElement;
   private navPrev!: HTMLButtonElement;
   private navNext!: HTMLButtonElement;
+  private equipSlots!: HTMLElement;
 
   private spells: Spell[] = Object.values(SPELLS);
   private current = 0;
   private loadout: (string | null)[] = [];
-  private equipSlots?: HTMLElement;
-  private equipPalette?: HTMLElement;
-  /** Sort à mettre en avant sur la page de sélection (surbrillance temporaire). */
-  private highlightSpell: string | null = null;
+  /** Emplacement à faire clignoter brièvement après un équipement. */
+  private flashSlot: number | null = null;
   private raf = 0;
 
   /** `onChange` est appelé après chaque modification du loadout (rafraîchit l'accueil). */
@@ -40,12 +38,13 @@ export class Spellbook {
   }
 
   private get spreadCount(): number {
-    return 1 + this.spells.length;
+    return this.spells.length;
   }
 
   open(): void {
     this.loadout = store.getLoadout();
     this.current = 0;
+    this.renderSlots();
     this.renderSpread(0);
     this.overlay.classList.add('open');
   }
@@ -63,15 +62,22 @@ export class Spellbook {
     scrim.className = 'book-scrim';
     scrim.addEventListener('click', () => this.close());
 
+    // Colonne : barre d'emplacements + livre.
+    const stack = document.createElement('div');
+    stack.className = 'book-stack';
+
+    // Barre d'emplacements persistante (au-dessus du livre).
+    const loadoutBar = document.createElement('div');
+    loadoutBar.className = 'book-loadout';
+    const label = document.createElement('div');
+    label.className = 'book-loadout-label';
+    label.textContent = `Tes sorts — ${SLOT_COUNT} emplacements (touches 1 à ${SLOT_COUNT})`;
+    this.equipSlots = document.createElement('div');
+    this.equipSlots.className = 'loadout-slots';
+    loadoutBar.append(label, this.equipSlots);
+
     const book = document.createElement('div');
     book.className = 'book';
-
-    // Marque-page (retour à la sélection).
-    const ribbon = document.createElement('button');
-    ribbon.className = 'book-ribbon';
-    ribbon.title = 'Revenir à la sélection';
-    ribbon.textContent = 'Sorts';
-    ribbon.addEventListener('click', () => this.go(0));
 
     this.spreadEl = document.createElement('div');
     this.spreadEl.className = 'book-spread';
@@ -97,10 +103,10 @@ export class Spellbook {
     const nav = document.createElement('div');
     nav.className = 'book-nav';
     this.navPrev = document.createElement('button');
-    this.navPrev.textContent = '‹ Page précédente';
+    this.navPrev.textContent = '‹ Sort précédent';
     this.navPrev.addEventListener('click', () => this.go(this.current - 1));
     this.navNext = document.createElement('button');
-    this.navNext.textContent = 'Page suivante ›';
+    this.navNext.textContent = 'Sort suivant ›';
     this.navNext.addEventListener('click', () => this.go(this.current + 1));
     const close = document.createElement('button');
     close.className = 'book-close';
@@ -108,12 +114,13 @@ export class Spellbook {
     close.addEventListener('click', () => this.close());
     nav.append(this.navPrev, this.navNext, close);
 
-    book.append(ribbon, this.spreadEl, nav);
-    overlay.append(scrim, book);
+    book.append(this.spreadEl, nav);
+    stack.append(loadoutBar, book);
+    overlay.append(scrim, stack);
     return overlay;
   }
 
-  /** Change de double-page. */
+  /** Change de double-page (un sort par double-page). */
   private go(target: number): void {
     const clamped = Math.max(0, Math.min(this.spreadCount - 1, target));
     if (clamped === this.current) return;
@@ -126,65 +133,15 @@ export class Spellbook {
     this.leftPage.innerHTML = '';
     this.rightPage.innerHTML = '';
 
-    if (index === 0) {
-      this.renderIntro(this.leftPage);
-      this.renderSelection(this.rightPage);
-    } else {
-      const spell = this.spells[index - 1];
-      this.renderDescription(this.leftPage, spell);
-      this.renderIllustration(this.rightPage, spell);
-    }
+    const spell = this.spells[index];
+    this.renderDescription(this.leftPage, spell);
+    this.renderIllustration(this.rightPage, spell);
 
     this.navPrev.disabled = index === 0;
     this.navNext.disabled = index === this.spreadCount - 1;
   }
 
-  // --- Double-page 0 : sélection ---
-
-  private renderIntro(el: HTMLElement): void {
-    const h = document.createElement('h2');
-    h.className = 'book-title';
-    h.textContent = 'Choisir ses sorts';
-
-    const p1 = document.createElement('p');
-    p1.className = 'book-desc';
-    p1.textContent =
-      `Avant la bataille, équipe jusqu'à ${SLOT_COUNT} sorts. Chaque emplacement ` +
-      `correspond à une touche (1 à ${SLOT_COUNT}).`;
-
-    const p2 = document.createElement('p');
-    p2.className = 'book-desc';
-    p2.textContent =
-      'Glisse un sort dans un emplacement, ou clique dessus. Un même sort ne peut ' +
-      'être équipé qu’une seule fois.';
-
-    const p3 = document.createElement('p');
-    p3.className = 'book-desc';
-    p3.textContent =
-      'Tourne les pages pour découvrir chaque sort en détail. Le marque-page te ' +
-      'ramène ici à tout moment.';
-
-    el.append(h, p1, p2, p3);
-  }
-
-  private renderSelection(el: HTMLElement): void {
-    const h = document.createElement('h2');
-    h.className = 'book-title';
-    h.textContent = 'Tes sorts';
-
-    this.equipSlots = document.createElement('div');
-    this.equipSlots.className = 'loadout-slots';
-
-    const palLabel = document.createElement('div');
-    palLabel.className = 'book-subtitle';
-    palLabel.textContent = 'Sorts disponibles';
-    this.equipPalette = document.createElement('div');
-    this.equipPalette.className = 'spell-cards';
-
-    el.append(h, this.equipSlots, palLabel, this.equipPalette);
-    this.renderSlots();
-    this.renderPalette();
-  }
+  // --- Barre d'emplacements persistante ---
 
   private renderSlots(): void {
     const container = this.equipSlots;
@@ -200,8 +157,8 @@ export class Spellbook {
 
       const spellId = this.loadout[i];
       if (spellId && SPELLS[spellId]) {
-        const chip = this.makeChip(spellId, false, i);
-        if (spellId === this.highlightSpell) chip.classList.add('chip-highlight');
+        const chip = this.makeChip(spellId, true, i);
+        if (i === this.flashSlot) chip.classList.add('chip-highlight');
         slot.appendChild(chip);
         slot.title = 'Cliquer pour vider';
         slot.addEventListener('click', (e) => {
@@ -227,73 +184,6 @@ export class Spellbook {
       });
       container.appendChild(slot);
     }
-  }
-
-  /** Cartes des sorts disponibles : nom + début de description + boutons + / 📖. */
-  private renderPalette(): void {
-    const container = this.equipPalette;
-    if (!container) return;
-    container.innerHTML = '';
-
-    this.spells.forEach((spell, idx) => {
-      const equipped = this.loadout.includes(spell.id);
-      const full = this.loadout.indexOf(null) < 0;
-
-      const card = document.createElement('div');
-      card.className = 'spell-card' + (equipped ? ' equipped' : '');
-      card.style.setProperty('--c', spell.color);
-      card.draggable = !equipped;
-      if (spell.id === this.highlightSpell) card.classList.add('chip-highlight');
-
-      if (!equipped) {
-        card.addEventListener('dragstart', (e) => {
-          card.classList.add('dragging');
-          const payload = JSON.stringify({ spellId: spell.id, fromSlot: null });
-          e.dataTransfer?.setData(DND_MIME, payload);
-          e.dataTransfer?.setData('text/plain', payload);
-          if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
-        });
-        card.addEventListener('dragend', () => card.classList.remove('dragging'));
-      }
-
-      // Haut : emblème coloré (glyphe) + nom + badge de recharge.
-      const top = document.createElement('div');
-      top.className = 'spell-card-top';
-      const emblem = document.createElement('span');
-      emblem.className = 'spell-emblem';
-      emblem.innerHTML = spellIconSvg(spell.icon);
-      const titles = document.createElement('div');
-      titles.className = 'spell-card-titles';
-      const name = document.createElement('div');
-      name.className = 'spell-card-name';
-      name.textContent = spell.name;
-      const cd = document.createElement('div');
-      cd.className = 'spell-card-cd';
-      cd.textContent = `⟳ ${spell.cooldown}s`;
-      titles.append(name, cd);
-      top.append(emblem, titles);
-
-      // Début de la description (source unique, tronquée par CSS).
-      const desc = document.createElement('p');
-      desc.className = 'spell-card-desc';
-      desc.textContent = spell.description;
-
-      const actions = document.createElement('div');
-      actions.className = 'spell-card-actions';
-      const equip = document.createElement('button');
-      equip.className = 'spell-equip';
-      equip.textContent = equipped ? '✓ Équipé' : full ? 'Complet' : 'Équiper';
-      equip.disabled = equipped || full;
-      equip.addEventListener('click', () => this.addToFirstEmpty(spell.id));
-      const link = document.createElement('button');
-      link.className = 'spell-card-link';
-      link.textContent = 'Voir la fiche';
-      link.addEventListener('click', () => this.go(idx + 1));
-      actions.append(equip, link);
-
-      card.append(top, desc, actions);
-      container.appendChild(card);
-    });
   }
 
   private makeChip(spellId: string, small: boolean, fromSlot?: number): HTMLElement {
@@ -340,25 +230,34 @@ export class Spellbook {
       if (existing >= 0 && existing !== target) this.loadout[existing] = this.loadout[target];
       this.loadout[target] = data.spellId;
     }
-    this.persistSelection();
+    this.persist();
   }
 
   private setSlot(i: number, spellId: string | null): void {
     this.loadout[i] = spellId;
-    this.persistSelection();
+    this.persist();
   }
 
   private addToFirstEmpty(spellId: string): void {
     if (this.loadout.includes(spellId)) return;
     const i = this.loadout.indexOf(null);
-    if (i >= 0) this.setSlot(i, spellId);
+    if (i < 0) return;
+    this.loadout[i] = spellId;
+    this.flashSlot = i;
+    this.persist();
+    window.setTimeout(() => {
+      if (this.flashSlot === i) {
+        this.flashSlot = null;
+        this.renderSlots();
+      }
+    }, 1200);
   }
 
-  /** Sauvegarde + rafraîchit uniquement la sélection (sans recréer la double-page). */
-  private persistSelection(): void {
+  /** Sauvegarde + rafraîchit la barre d'emplacements et la page courante. */
+  private persist(): void {
     store.setLoadout(this.loadout);
     this.renderSlots();
-    this.renderPalette();
+    this.renderSpread(this.current);
     this.onChange?.();
   }
 
@@ -370,17 +269,21 @@ export class Spellbook {
     title.style.color = spell.color;
     title.textContent = spell.name;
 
+    const emblem = document.createElement('span');
+    emblem.className = 'spell-emblem book-emblem';
+    emblem.style.setProperty('--c', spell.color);
+    emblem.innerHTML = spellIconSvg(spell.icon);
+
     const desc = document.createElement('p');
     desc.className = 'book-desc';
     desc.textContent = spell.description;
 
     const slot = this.loadout.indexOf(spell.id);
     const status = document.createElement('p');
-    status.className = 'book-desc';
-    status.textContent =
-      slot >= 0 ? `Équipé sur la touche ${slot + 1}.` : 'Non équipé.';
+    status.className = 'book-desc book-status';
+    status.textContent = slot >= 0 ? `Équipé sur la touche ${slot + 1}.` : 'Non équipé.';
 
-    el.append(title, desc, status);
+    el.append(title, emblem, desc, status);
   }
 
   private renderIllustration(el: HTMLElement, spell: Spell): void {
@@ -395,24 +298,25 @@ export class Spellbook {
 
     const btn = document.createElement('button');
     btn.className = 'book-equip';
-    btn.textContent = 'Équiper';
-    btn.addEventListener('click', () => this.goToSelection(spell.id));
+    const info = this.equipInfo(spell);
+    btn.textContent = info.text;
+    btn.disabled = !!info.disabled;
+    if (info.action) btn.addEventListener('click', info.action);
 
     el.append(canvas, stats, btn);
     this.startAnim(canvas, spell);
   }
 
-  /** Ramène à la page de sélection et met en avant le sort cliqué. */
-  private goToSelection(spellId: string): void {
-    this.highlightSpell = spellId;
-    this.go(0);
-    window.setTimeout(() => {
-      if (this.highlightSpell === spellId) {
-        this.highlightSpell = null;
-        this.renderSlots();
-        this.renderPalette();
-      }
-    }, 1700);
+  /** État du bouton Équiper selon que le sort est équipé, ou que le loadout est plein. */
+  private equipInfo(spell: Spell): { text: string; disabled?: boolean; action?: () => void } {
+    const slot = this.loadout.indexOf(spell.id);
+    if (slot >= 0) {
+      return { text: `✓ Équipé (touche ${slot + 1}) — retirer`, action: () => this.setSlot(slot, null) };
+    }
+    if (this.loadout.indexOf(null) < 0) {
+      return { text: 'Emplacements pleins', disabled: true };
+    }
+    return { text: 'Équiper', action: () => this.addToFirstEmpty(spell.id) };
   }
 
   // --- Visuels animés ---
