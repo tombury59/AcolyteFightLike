@@ -193,11 +193,14 @@ export class Game {
     if (result) {
       this.status = 'over';
       const survived = Math.floor(this.world.time);
-      const stats = store.recordMatch(result === 'win', this.world.time);
+      // Éliminations approximées : adversaires morts à la fin de la manche.
+      const kills = this.world.players.filter((p) => p.id !== LOCAL_PLAYER_ID && !p.alive).length;
+      const outcome = store.recordMatch(result === 'win', this.world.time, kills);
+      const levelUp = outcome.leveledTo ? ` · Niveau ${outcome.leveledTo} !` : '';
       const detail =
         result === 'win'
-          ? `Survécu ${survived}s · Victoires ${stats.won}/${stats.played}`
-          : `Survécu ${survived}s`;
+          ? `Survécu ${survived}s · +${outcome.xpGained} XP${levelUp} · Victoires ${outcome.stats.won}/${outcome.stats.played}`
+          : `Survécu ${survived}s · +${outcome.xpGained} XP${levelUp}`;
       this.overlay.showGameOver(result, detail);
       sfx.play(result === 'win' ? 'win' : 'lose');
       return true;

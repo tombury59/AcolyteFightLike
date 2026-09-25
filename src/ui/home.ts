@@ -116,7 +116,10 @@ export class Home {
 
   private refreshStats(): void {
     const s = store.getStats();
+    const level = store.getLevel();
+    const points = store.availablePoints();
+    const pts = points > 0 ? ` · ${points} point${points > 1 ? 's' : ''} à dépenser` : '';
     this.statsEl.textContent =
-      `Parties ${s.played} · Victoires ${s.won} · Record ${Math.floor(s.bestTime)}s`;
+      `Niveau ${level}${pts} · Parties ${s.played} · Victoires ${s.won} · Record ${Math.floor(s.bestTime)}s`;
   }
 }

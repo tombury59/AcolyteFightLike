@@ -969,3 +969,175 @@ body,
 .spell-card-link:hover {
   color: #6b1a24;
 }
+
+/* ============================================================= */
+/* Grimoire : progression (niveau/XP/points) + arbre de talents  */
+/* ============================================================= */
+
+/* En-tête de progression (bois, au-dessus de la barre d'emplacements). */
+.book-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(940px, 96vw);
+  padding: 12px 18px;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(87deg, rgba(0, 0, 0, 0.14) 0 2px, rgba(255, 255, 255, 0.03) 2px 6px),
+    linear-gradient(155deg, #7a552f 0%, #5c3c1e 55%, #422a12 100%);
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 2px rgba(0, 0, 0, 0.3),
+    inset 0 3px 8px rgba(255, 255, 255, 0.1);
+}
+
+.book-progress-top {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  color: #f5e7c8;
+  font-size: 13px;
+}
+
+.book-progress-level {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.book-progress-points {
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.book-progress-points.has-points {
+  color: #ffd66b;
+  opacity: 1;
+  text-shadow: 0 0 10px rgba(255, 190, 60, 0.6);
+}
+
+.book-progress-xp {
+  margin-left: auto;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+.book-progress-bar {
+  height: 9px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.book-progress-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e9cd7c, #ffd66b);
+  box-shadow: 0 0 8px rgba(255, 200, 80, 0.6);
+  transition: width 0.4s ease;
+}
+
+/* Page gauche : conteneur de l'arbre (pas de scroll, l'SVG remplit). */
+.book-tree-page {
+  overflow: hidden;
+  padding: 4px;
+  display: flex;
+}
+
+.spell-tree {
+  width: 100%;
+  height: auto;
+  align-self: center;
+  overflow: visible;
+}
+
+/* Liens de dépendance. */
+.tree-link {
+  stroke: rgba(90, 58, 28, 0.35);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.tree-link.active {
+  stroke: rgba(122, 31, 43, 0.7);
+}
+
+/* Nœud de sort. */
+.tree-node .tree-node-bg {
+  fill: #ece0c2;
+  stroke: var(--c, #888);
+  stroke-width: 3;
+  transition: transform 0.12s ease;
+}
+
+.tree-node .tree-node-icon { color: var(--c, #333); }
+.tree-node .tree-node-icon path,
+.tree-node .tree-node-icon circle,
+.tree-node .tree-node-icon rect,
+.tree-node .tree-node-icon polygon,
+.tree-node .tree-node-icon line { fill: currentColor; stroke: currentColor; }
+
+.tree-node-name {
+  fill: #5a4326;
+  font-size: 12px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: rgba(245, 236, 212, 0.9);
+  stroke-width: 3px;
+}
+
+.tree-node-badge {
+  fill: #6b5232;
+  font-size: 11px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: rgba(245, 236, 212, 0.9);
+  stroke-width: 3px;
+}
+
+/* État débloqué : couleur pleine, icône lisible. */
+.tree-node.unlocked .tree-node-bg {
+  fill: color-mix(in srgb, var(--c) 22%, #ece0c2);
+}
+.tree-node.unlocked .tree-node-icon { color: color-mix(in srgb, var(--c) 65%, #3a2a14); }
+
+/* État déblocable : pulse invitant. */
+.tree-node.unlockable .tree-node-bg {
+  fill: #fff6df;
+  stroke: #d4a017;
+  animation: tree-pulse 1.4s ease-in-out infinite;
+}
+.tree-node.unlockable .tree-node-badge { fill: #a86a00; }
+
+@keyframes tree-pulse {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(212, 160, 23, 0)); }
+  50% { filter: drop-shadow(0 0 6px rgba(212, 160, 23, 0.9)); }
+}
+
+/* État verrouillé : grisé. */
+.tree-node.locked .tree-node-bg {
+  fill: #d8cdb4;
+  stroke: rgba(90, 58, 28, 0.35);
+}
+.tree-node.locked .tree-node-icon { color: rgba(90, 58, 28, 0.4); }
+.tree-node.locked .tree-node-name { fill: rgba(90, 58, 28, 0.55); }
+
+/* Équipé : anneau doré. */
+.tree-node.equipped .tree-node-bg {
+  stroke: #d4a017;
+  stroke-width: 4;
+}
+
+/* Sélectionné : léger agrandissement + halo. */
+.tree-node.selected .tree-node-bg {
+  transform: scale(1.12);
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.4));
+}
+
+.book-tree-hint {
+  color: #f0e2c4;
+  font-size: 13px;
+  opacity: 0.85;
+}

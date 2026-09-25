@@ -6,7 +6,7 @@ const PREFERRED_DIST = 230; // distance de combat idéale (kiting)
 const BAND = 55; // hystérésis autour de la distance idéale
 const DASH_CLOSE_DIST = 340; // au-delà : on peut dasher pour combler l'écart
 const PROJ_SPEED_REF = 700; // vitesse de projectile de référence (visée anticipée)
-const AIM_JITTER = 0.13; // erreur de visée aléatoire (radians, ~7.5°) -> tirs moins parfaits
+const AIM_JITTER = 0.5; // erreur de visée aléatoire (radians, ~7.5°) -> tirs moins parfaits
 
 // --- Rôles des sorts (pour un choix tactique) ---
 const MOBILITY = new Set(['dash', 'teleport']); // repositionnement / fuite

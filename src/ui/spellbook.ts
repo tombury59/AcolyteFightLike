@@ -3,8 +3,24 @@ import { SPELLS } from '../core/spells/definitions';
 import { SLOT_COUNT } from '../input/keybindings';
 import type { Spell } from '../core/spells/spell';
 import { drawSpellPreview } from './spellPreview';
+import {
+  SPELL_TREE,
+  costOf,
+  isUnlockable,
+  nodeOf,
+  prereqsOf,
+} from '../core/spells/tree';
+import { xpIntoLevel, xpToNextLevel } from '../core/progression';
 
 const DND_MIME = 'application/x-afl-spell';
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+// Grille de rendu de l'arbre (positions en unités du viewBox).
+const VIEW_W = 560;
+const VIEW_H = 380;
+const NODE_R = 26;
+const colX = (col: number) => 60 + col * 110;
+const rowY = (row: number) => 45 + row * 72;
 
 /** Emblème SVG d'un sort à partir de son icône dédiée. */
 function spellIconSvg(icon: string): string {
@@ -12,41 +28,32 @@ function spellIconSvg(icon: string): string {
 }
 
 /**
- * Grimoire : une barre d'emplacements (loadout) fixe AU-DESSUS du livre, visible
- * sur toutes les pages, et un livre-catalogue dont chaque double-page présente un
- * sort (description à gauche, illustration + bouton Équiper à droite).
+ * Grimoire : barre d'emplacements (loadout) + arbre de talents en SVG. L'en-tête
+ * affiche le niveau/les points ; l'arbre (page gauche) permet de débloquer les
+ * sorts avec des points, et la fiche (page droite) de les équiper.
  */
 export class Spellbook {
   private overlay: HTMLDivElement;
-  private spreadEl!: HTMLDivElement;
   private leftPage!: HTMLDivElement;
   private rightPage!: HTMLDivElement;
-  private navPrev!: HTMLButtonElement;
-  private navNext!: HTMLButtonElement;
   private equipSlots!: HTMLElement;
+  private progressEl!: HTMLDivElement;
 
-  private spells: Spell[] = Object.values(SPELLS);
-  private current = 0;
+  private current = 'fireball';
   private loadout: (string | null)[] = [];
   /** Emplacement à faire clignoter brièvement après un équipement. */
   private flashSlot: number | null = null;
   private raf = 0;
 
-  /** `onChange` est appelé après chaque modification du loadout (rafraîchit l'accueil). */
+  /** `onChange` est appelé après chaque modification (rafraîchit l'accueil). */
   constructor(private onChange?: () => void) {
     this.overlay = this.build();
     document.body.appendChild(this.overlay);
   }
 
-  private get spreadCount(): number {
-    return this.spells.length;
-  }
-
   open(): void {
     this.loadout = store.getLoadout();
-    this.current = 0;
-    this.renderSlots();
-    this.renderSpread(0);
+    this.renderAll();
     this.overlay.classList.add('open');
   }
 
@@ -63,9 +70,12 @@ export class Spellbook {
     scrim.className = 'book-scrim';
     scrim.addEventListener('click', () => this.close());
 
-    // Colonne : barre d'emplacements + livre.
     const stack = document.createElement('div');
     stack.className = 'book-stack';
+
+    // En-tête de progression (niveau + XP + points).
+    this.progressEl = document.createElement('div');
+    this.progressEl.className = 'book-progress';
 
     // Barre d'emplacements persistante (au-dessus du livre).
     const loadoutBar = document.createElement('div');
@@ -80,13 +90,13 @@ export class Spellbook {
     const book = document.createElement('div');
     book.className = 'book';
 
-    this.spreadEl = document.createElement('div');
-    this.spreadEl.className = 'book-spread';
+    const spread = document.createElement('div');
+    spread.className = 'book-spread';
 
     const leftLeaf = document.createElement('div');
     leftLeaf.className = 'book-leaf book-leaf--left';
     this.leftPage = document.createElement('div');
-    this.leftPage.className = 'book-page';
+    this.leftPage.className = 'book-page book-tree-page';
     leftLeaf.appendChild(this.leftPage);
 
     const spine = document.createElement('div');
@@ -98,48 +108,162 @@ export class Spellbook {
     this.rightPage.className = 'book-page';
     rightLeaf.appendChild(this.rightPage);
 
-    this.spreadEl.append(leftLeaf, spine, rightLeaf);
+    spread.append(leftLeaf, spine, rightLeaf);
 
-    // Navigation (sur le bois, sous les pages).
     const nav = document.createElement('div');
     nav.className = 'book-nav';
-    this.navPrev = document.createElement('button');
-    this.navPrev.textContent = '‹ Sort précédent';
-    this.navPrev.addEventListener('click', () => this.go(this.current - 1));
-    this.navNext = document.createElement('button');
-    this.navNext.textContent = 'Sort suivant ›';
-    this.navNext.addEventListener('click', () => this.go(this.current + 1));
+    const hint = document.createElement('span');
+    hint.className = 'book-tree-hint';
+    hint.textContent = 'Clique un sort pour le débloquer ou l’équiper.';
     const close = document.createElement('button');
     close.className = 'book-close';
     close.textContent = 'Fermer';
     close.addEventListener('click', () => this.close());
-    nav.append(this.navPrev, this.navNext, close);
+    nav.append(hint, close);
 
-    book.append(this.spreadEl, nav);
-    stack.append(loadoutBar, book);
+    book.append(spread, nav);
+    stack.append(this.progressEl, loadoutBar, book);
     overlay.append(scrim, stack);
     return overlay;
   }
 
-  /** Change de double-page (un sort par double-page). */
-  private go(target: number): void {
-    const clamped = Math.max(0, Math.min(this.spreadCount - 1, target));
-    if (clamped === this.current) return;
-    this.current = clamped;
-    this.renderSpread(clamped);
+  /** Rafraîchit tout (en-tête, emplacements, arbre, fiche courante). */
+  private renderAll(): void {
+    this.renderProgress();
+    this.renderSlots();
+    this.renderTree();
+    this.renderDetail(this.current);
   }
 
-  private renderSpread(index: number): void {
-    this.stopAnim();
+  // --- En-tête de progression ---
+
+  private renderProgress(): void {
+    const level = store.getLevel();
+    const points = store.availablePoints();
+    const { xp } = store.getProgress();
+    const into = xpIntoLevel(xp);
+    const need = xpToNextLevel(xp);
+    const pct = need > 0 ? Math.min(100, Math.round((into / need) * 100)) : 100;
+
+    this.progressEl.innerHTML = '';
+    const top = document.createElement('div');
+    top.className = 'book-progress-top';
+    const lvl = document.createElement('span');
+    lvl.className = 'book-progress-level';
+    lvl.textContent = `Niveau ${level}`;
+    const pts = document.createElement('span');
+    pts.className = 'book-progress-points' + (points > 0 ? ' has-points' : '');
+    pts.textContent = points > 0 ? `${points} point${points > 1 ? 's' : ''} à dépenser` : 'Aucun point';
+    const xpTxt = document.createElement('span');
+    xpTxt.className = 'book-progress-xp';
+    xpTxt.textContent = `${into} / ${need} XP`;
+    top.append(lvl, pts, xpTxt);
+
+    const bar = document.createElement('div');
+    bar.className = 'book-progress-bar';
+    const fill = document.createElement('div');
+    fill.className = 'book-progress-fill';
+    fill.style.width = `${pct}%`;
+    bar.appendChild(fill);
+
+    this.progressEl.append(top, bar);
+  }
+
+  // --- Arbre de talents (SVG) ---
+
+  private renderTree(): void {
+    const unlocked = new Set(store.getProgress().unlocked);
+    const points = store.availablePoints();
+
     this.leftPage.innerHTML = '';
-    this.rightPage.innerHTML = '';
+    const svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('class', 'spell-tree');
+    svg.setAttribute('viewBox', `0 0 ${VIEW_W} ${VIEW_H}`);
 
-    const spell = this.spells[index];
-    this.renderDescription(this.leftPage, spell);
-    this.renderIllustration(this.rightPage, spell);
+    // 1) Liens (prérequis parent -> enfant), dessinés en premier (sous les nœuds).
+    for (const n of SPELL_TREE) {
+      for (const req of n.requires) {
+        const p = nodeOf(req);
+        if (!p) continue;
+        const line = document.createElementNS(SVGNS, 'line');
+        line.setAttribute('x1', String(colX(p.col)));
+        line.setAttribute('y1', String(rowY(p.row)));
+        line.setAttribute('x2', String(colX(n.col)));
+        line.setAttribute('y2', String(rowY(n.row)));
+        const on = unlocked.has(n.id) || (unlocked.has(req) && isUnlockable(n.id, unlocked));
+        line.setAttribute('class', 'tree-link' + (on ? ' active' : ''));
+        svg.appendChild(line);
+      }
+    }
 
-    this.navPrev.disabled = index === 0;
-    this.navNext.disabled = index === this.spreadCount - 1;
+    // 2) Nœuds.
+    for (const n of SPELL_TREE) {
+      const spell = SPELLS[n.id];
+      if (!spell) continue;
+      const x = colX(n.col);
+      const y = rowY(n.row);
+      const isUn = unlocked.has(n.id);
+      const canUn = !isUn && isUnlockable(n.id, unlocked);
+      const affordable = canUn && costOf(n.id) <= points;
+
+      const g = document.createElementNS(SVGNS, 'g');
+      let cls = 'tree-node';
+      if (isUn) cls += ' unlocked';
+      else if (affordable) cls += ' unlockable';
+      else cls += ' locked';
+      if (this.loadout.includes(n.id)) cls += ' equipped';
+      if (n.id === this.current) cls += ' selected';
+      g.setAttribute('class', cls);
+      g.setAttribute('transform', `translate(${x} ${y})`);
+      g.style.setProperty('--c', spell.color);
+      g.style.cursor = 'pointer';
+
+      const circle = document.createElementNS(SVGNS, 'circle');
+      circle.setAttribute('r', String(NODE_R));
+      circle.setAttribute('class', 'tree-node-bg');
+      g.appendChild(circle);
+
+      // Icône (SVG imbriqué 24x24 centré).
+      const icon = document.createElementNS(SVGNS, 'svg');
+      icon.setAttribute('viewBox', '0 0 24 24');
+      icon.setAttribute('x', String(-14));
+      icon.setAttribute('y', String(-14));
+      icon.setAttribute('width', '28');
+      icon.setAttribute('height', '28');
+      icon.setAttribute('class', 'tree-node-icon');
+      icon.innerHTML = spell.icon;
+      g.appendChild(icon);
+
+      // Coût / cadenas en pastille.
+      if (!isUn) {
+        const badge = document.createElementNS(SVGNS, 'text');
+        badge.setAttribute('class', 'tree-node-badge');
+        badge.setAttribute('x', '0');
+        badge.setAttribute('y', String(NODE_R + 14));
+        badge.setAttribute('text-anchor', 'middle');
+        badge.textContent = canUn ? `${costOf(n.id)} pt` : '🔒';
+        g.appendChild(badge);
+      }
+
+      // Nom sous le nœud.
+      const name = document.createElementNS(SVGNS, 'text');
+      name.setAttribute('class', 'tree-node-name');
+      name.setAttribute('x', '0');
+      name.setAttribute('y', String(-NODE_R - 8));
+      name.setAttribute('text-anchor', 'middle');
+      name.textContent = spell.name;
+      g.appendChild(name);
+
+      g.addEventListener('click', () => {
+        this.current = n.id;
+        this.renderTree();
+        this.renderDetail(n.id);
+      });
+
+      svg.appendChild(g);
+    }
+
+    this.leftPage.appendChild(svg);
   }
 
   // --- Barre d'emplacements persistante ---
@@ -254,17 +378,23 @@ export class Spellbook {
     }, 1200);
   }
 
-  /** Sauvegarde + rafraîchit la barre d'emplacements et la page courante. */
+  /** Sauvegarde + rafraîchit emplacements, arbre et fiche. */
   private persist(): void {
     store.setLoadout(this.loadout);
     this.renderSlots();
-    this.renderSpread(this.current);
+    this.renderTree();
+    this.renderDetail(this.current);
     this.onChange?.();
   }
 
-  // --- Double-page d'un sort ---
+  // --- Fiche d'un sort (page droite) ---
 
-  private renderDescription(el: HTMLElement, spell: Spell): void {
+  private renderDetail(spellId: string): void {
+    this.stopAnim();
+    this.rightPage.innerHTML = '';
+    const spell = SPELLS[spellId];
+    if (!spell) return;
+
     const title = document.createElement('h2');
     title.className = 'book-title';
     title.style.color = spell.color;
@@ -275,23 +405,14 @@ export class Spellbook {
     emblem.style.setProperty('--c', spell.color);
     emblem.innerHTML = spellIconSvg(spell.icon);
 
-    const desc = document.createElement('p');
-    desc.className = 'book-desc';
-    desc.textContent = spell.description;
-
-    const slot = this.loadout.indexOf(spell.id);
-    const status = document.createElement('p');
-    status.className = 'book-desc book-status';
-    status.textContent = slot >= 0 ? `Équipé sur la touche ${slot + 1}.` : 'Non équipé.';
-
-    el.append(title, emblem, desc, status);
-  }
-
-  private renderIllustration(el: HTMLElement, spell: Spell): void {
     const canvas = document.createElement('canvas');
     canvas.className = 'book-visual';
     canvas.width = 520;
     canvas.height = 240;
+
+    const desc = document.createElement('p');
+    desc.className = 'book-desc';
+    desc.textContent = spell.description;
 
     const stats = document.createElement('div');
     stats.className = 'book-stats';
@@ -299,20 +420,57 @@ export class Spellbook {
 
     const btn = document.createElement('button');
     btn.className = 'book-equip';
-    const info = this.equipInfo(spell);
+    const info = this.actionInfo(spell);
     btn.textContent = info.text;
     btn.disabled = !!info.disabled;
+    if (info.equipped) btn.classList.add('equipped');
     if (info.action) btn.addEventListener('click', info.action);
 
-    el.append(canvas, stats, btn);
+    this.rightPage.append(title, emblem, canvas, desc, stats, btn);
     this.startAnim(canvas, spell);
   }
 
-  /** État du bouton Équiper selon que le sort est équipé, ou que le loadout est plein. */
-  private equipInfo(spell: Spell): { text: string; disabled?: boolean; action?: () => void } {
+  /** État du bouton d'action : débloquer (verrouillé) ou équiper/retirer (débloqué). */
+  private actionInfo(spell: Spell): {
+    text: string;
+    disabled?: boolean;
+    equipped?: boolean;
+    action?: () => void;
+  } {
+    const unlocked = new Set(store.getProgress().unlocked);
+    if (!unlocked.has(spell.id)) {
+      const cost = costOf(spell.id);
+      if (!isUnlockable(spell.id, unlocked)) {
+        const names = prereqsOf(spell.id)
+          .filter((r) => !unlocked.has(r))
+          .map((r) => SPELLS[r]?.name ?? r)
+          .join(', ');
+        return { text: `🔒 Requiert : ${names}`, disabled: true };
+      }
+      if (cost > store.availablePoints()) {
+        return { text: `Débloquer (${cost} pt) — points insuffisants`, disabled: true };
+      }
+      return {
+        text: `Débloquer (${cost} pt)`,
+        action: () => {
+          if (store.unlockSpell(spell.id)) {
+            this.renderProgress();
+            this.renderTree();
+            this.renderDetail(spell.id);
+            this.onChange?.();
+          }
+        },
+      };
+    }
+
+    // Débloqué : équiper / retirer.
     const slot = this.loadout.indexOf(spell.id);
     if (slot >= 0) {
-      return { text: `✓ Équipé (touche ${slot + 1}) — retirer`, action: () => this.setSlot(slot, null) };
+      return {
+        text: `✓ Équipé (touche ${slot + 1}) — retirer`,
+        equipped: true,
+        action: () => this.setSlot(slot, null),
+      };
     }
     if (this.loadout.indexOf(null) < 0) {
       return { text: 'Emplacements pleins', disabled: true };
